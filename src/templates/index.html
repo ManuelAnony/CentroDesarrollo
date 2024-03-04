@@ -1,0 +1,356 @@
+<!-- dashboard.html -->
+{% extends 'layout.html' %}
+
+{% block title %}Service Manager {% endblock %}
+<head>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+{% block content %}
+
+<h1>Service Manager</h1>
+<div class="container pt-5">
+    <div class="d-flex justify-content-between mb-3">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="tabProyectos" data-toggle="tab" href="#proyectos" role="tab" aria-controls="proyectos" aria-selected="true">Proyectos</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabSolicitudes" data-toggle="tab" href="#solicitudes" role="tab" aria-controls="solicitudes" aria-selected="false">Solicitudes</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabEmpresas" data-toggle="tab" href="#empresas" role="tab" aria-controls="empresas" aria-selected="false">Empresas</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabRegistrarDesarrollador" data-toggle="tab" href="#registrarDesarrollador" role="tab" aria-controls="registrarDesarrollador" aria-selected="false">Registrar Desarrollador</a>
+            </li>
+        </ul>
+
+        <div>
+            <a href="/logout" class="btn btn-danger">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="tab-content" id="myTabContent">
+        <!-- Contenido de Proyectos -->
+        <div id="proyectos" class="tab-pane fade  show active"  role="tabpanel" aria-labelledby="proyectos-tab">
+            <div class="container pt-5">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card card-body">
+                            
+                            <!-- Contenido específico del dashboard -->
+                            <!-- Registrar nuevo proyecto -->
+                            <h2>Registrar Nuevo Proyecto</h2>
+                            <form method="POST" action="/registrar_proyecto">
+                                <!-- Contenido del formulario de registro -->
+                                <div class="form-group">
+                                    <label for="nombre_proyecto">Nombre del Proyecto:</label>
+                                    <input type="text" name="nombre_proyecto" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="descripcion">Descripción:</label>
+                                    <input type="text" name="descripcion" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fecha_inicio">Fecha de Inicio:</label>
+                                    <input type="date" name="fecha_inicio" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fecha_finalizacion">Fecha de Finalización:</label>
+                                    <input type="date" name="fecha_finalizacion" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="estado">Estado:</label>
+                                    <select name="estado" class="form-control" required>
+                                        <option value="pendiente">Pendiente</option>
+                                        <option value="en_proceso">En Proceso</option>
+                                        <option value="completado">Completado</option>
+                                    </select>
+                                </div>
+                                <br>
+                                <br>
+                                <input class="btn btn-primary" type="submit" value="Registrar Proyecto">
+                                <br>
+                                <a href="/logout">Cerrar Sesión</a>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card card-body">
+                            <!-- Ver proyectos en curso -->
+                            <h2>Proyectos en Curso</h2>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre del Proyecto</th>
+                                        <th>Descripción</th>
+                                        <th>Fecha de Inicio</th>
+                                        <th>Fecha de Finalización</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for proyecto in proyectos %}
+                                    <tr>
+                                        <td>{{ proyecto.nombre }}</td>
+                                        <td>{{ proyecto.descripcion }}</td>
+                                        <td>{{ proyecto.fecha_inicio }}</td>
+                                        <td>{{ proyecto.fecha_finalizacion }}</td>
+                                        <td>{{ proyecto.estado }}</td>
+                                        <td>
+                                            <a href="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-primary btn-sm">Asignar Equipo</a>
+                                            <a href="{{ url_for('notificar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-success btn-sm">Notificar Equipo</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Contenido de Vista de Solicitudes -->
+        <div id="solicitudes" class="tab-pane fade" role="tabpanel" aria-labelledby="tabSolicitudes">
+            <div class="container pt-5">
+                <h2>Solicitudes</h2>
+                <!-- Tabla para mostrar las solicitudes -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre de la Solicitud</th>
+                            <th>Descripción</th>
+                            <th>Fecha</th>
+                            <th>Correo</th>
+                            <th>Empresa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in solicitudes %}
+                        <tr>
+                            <td>{{ solicitud.nombre_solicitud }}</td>
+                            <td>{{ solicitud.descripcion_solicitud }}</td>
+                            <td>{{ solicitud.fecha }}</td>
+                            <td>{{ solicitud.correo_empresa }}</td>
+                            <td>{{ solicitud.empresa }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+
+
+        <!-- Contenido de Empresas -->
+        <div id="empresas" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab">
+            <div class="container pt-5">
+                <h2>Información de la Empresa</h2>
+                <table class="table table-striped">
+                    <tr>
+                        <th>Nombre de la Empresa</th>
+                        <td>{{ nombre_empresa }}</td>
+                    </tr>
+                    <tr>
+                        <th>NIT</th>
+                        <td>{{ nit }}</td>
+                    </tr>
+                    <tr>
+                        <th>Administrador</th>
+                        <td>{{ administrador }}</td>
+                    </tr>
+                    <tr>
+                        <th>Email de la Empresa</th>
+                        <td>{{ email_empresa }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+
+
+        <!-- Contenido de Registrar Desarrollador -->
+        <div id="registrarDesarrollador" class="tab-pane fade"  role="tabpanel" aria-labelledby="registrarDesarrollador-tab">
+            <div class="container-left">
+            <div class="centered-object">
+                <div class="card">
+                    <div class="card2">
+                        <form class="form" method="POST">
+                        <p id="heading">Registra tu empresa</p>
+                        <div class="field">
+                          <svg
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            height="16"
+                            width="16"
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="input-icon"
+                          >
+                          
+                            <path
+                            class="cls-2"
+                            d="M125.92054,105.8632a5.80889,5.80889,0,0,0-3.12736-4.21271c-5.43886-2.71133-17.3754-6.718-17.3754-6.718H104.408l-3.26621,4.35761,3.06215,21.18619h22.81418A126.32884,126.32884,0,0,0,125.92054,105.8632Z"
+                            ></path>
+                          </svg>
+                          <input
+                            type="text"
+                            class="input-field"
+                            placeholder="Nombre Empresa"
+                            autocomplete="off"
+                            id="nombreEmpresa"
+                            name="nombreEmpresa"
+                            required
+                          />
+                        </div>
+
+                        <div class="field">
+                          <svg
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            height="16"
+                            width="16"
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="input-icon"
+                          >
+                            <path
+                              d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z"
+                            ></path>
+                          </svg>
+                          <input
+                            type="text"
+                            class="input-field"
+                            placeholder="Nit"
+                            autocomplete="off"
+                            id="nit"
+                            name="nit"
+                            required
+                          />
+                        </div>
+                        <div class="field">
+                          <svg 
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          height="16"
+                          width="16"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="input-icon"
+                          >
+                            <path 
+                              d="M12,12.5c-3.04,0-5.5,1.73-5.5,3.5s2.46,3.5,5.5,3.5,5.5-1.73,5.5-3.5-2.46-3.5-5.5-3.5Zm0-.5c1.66,0,3-1.34,3-3s-1.34-3-3-3-3,1.34-3,3,1.34,3,3,3Z">
+                            </path>
+                          </svg>
+                          <input
+                            type="text"
+                            class="input-field"
+                            placeholder="Administrador"
+                            autocomplete="off"
+                            id="administrador"
+                            name="administrador"
+                            required
+                          />
+                        </div>
+                        <div class="field">
+                          <svg
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            height="16"
+                            width="16"
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="input-icon"
+                          >
+                            <path
+                              d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z"
+                            ></path>
+                          </svg>
+                          <input
+                            type="text"
+                            class="input-field"
+                            placeholder="Email"
+                            autocomplete="off"
+                            id="email"
+                            name="email"
+                            required
+                          />
+                        </div>
+                        <div class="field">
+                          <svg
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            height="16"
+                            width="16"
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="input-icon"
+                          >
+                            <path
+                              d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"
+                            ></path>
+                          </svg>
+                          <input 
+                          type="password"
+                          id="password"
+                          name="password" 
+                          class="input-field" 
+                          placeholder="Password"
+                          required
+                           />
+                          
+                        </div>
+                        <div class="field">
+                          <svg
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            height="16"
+                            width="16"
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="input-icon"
+                          >
+                            <path
+                              d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"
+                            ></path>
+                          </svg>
+                          <input 
+                          type="password"
+                          id="password"
+                          name="password" 
+                          class="input-field" 
+                          placeholder="Confirma tu Password"
+                          required 
+                          />
+                        </div>
+                        <div class="btn">
+                          
+                          <button class="button2" >Registrate</button>
+                        </div>
+                        
+
+                      </form>
+                    </div>
+                  </div>
+                  
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+<!-- Incluir Bootstrap y jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Inicializar las pestañas -->
+<script>
+    $(document).ready(function(){
+        $('#myTab a').on('shown.bs.tab', function (e) {
+            var target = $(e.target).attr("href");
+            if (target === "#registrarDesarrollador") {
+                // Código específico para la pestaña de Registrar Desarrollador
+                console.log("Mostrando pestaña Registrar Desarrollador");
+            }
+            // Agregar lógica adicional si es necesario para otras pestañas
+        });
+    });
+</script>
+{% endblock %}
