@@ -271,27 +271,87 @@ def registrar_proyecto():
         flash('Proyecto registrado con éxito', 'success')
         return redirect(url_for('index'))
 
-@app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
-def asignar_equipo(proyecto_id):
+@app.route('/asignar_equipo', methods=['GET'])
+def mostrar_formulario_asignar_equipo():
+    # Obtén la lista de usuarios con el rol "Desarrollador" desde tu base de datos
+    usuarios_desarrolladores = con_bd.usuarios.find({"rol": "Desarrollador"})
+
+    return render_template('asignar_equipo.html', usuarios=usuarios_desarrolladores)
+
+@app.route('/proyecto')
+def proyecto():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    # Consulta para obtener los proyectos asignados al administrador
+    proyectos_cursor = con_bd.proyectos.find({"miembros_equipo": session['email']})
+    proyectos = list(proyectos_cursor)
+
+    # Consulta para obtener las actividades relacionadas con cada proyecto
+    actividades_por_proyecto = {}  # Un diccionario para almacenar actividades por proyecto
+
+    for proyecto in proyectos:
+        actividades_cursor = con_bd.actividades.find({"proyecto_id": proyecto['_id']})
+        actividades = list(actividades_cursor)
+        actividades_por_proyecto[proyecto['_id']] = actividades
+
+    return render_template('proyecto.html', proyectos=proyectos, actividades_por_proyecto=actividades_por_proyecto)
+
+@app.route('/crear_actividad', methods=['POST'])
+def crear_actividad():
     if request.method == 'POST':
-        # Aquí puedes procesar la información del formulario para asignar el equipo al proyecto.
-        # Recuerda que necesitarás usar la variable "proyecto_id" para identificar el proyecto.
+        # Procesa la información del formulario para crear una nueva actividad
+        admin_email = request.form.get("admin_email")
+        nombre_actividad = request.form.get("nombre_actividad")
+        fecha_vencimiento = request.form.get("fecha_vencimiento")
+        proyecto_id = ObjectId(request.form.get("proyecto_id"))
 
-        # Por ejemplo, puedes acceder a los datos del formulario de esta manera:
-        nombre_equipo = request.form.get("nombre_equipo")
-        miembros = request.form.getlist("miembros")  # Si tienes una lista de miembros
+        # Aquí debes guardar la información en la base de datos, por ejemplo, en la colección de actividades
+        nueva_actividad = {
+            "admin_email": admin_email,
+            "nombre": nombre_actividad,
+            "fecha_vencimiento": fecha_vencimiento,
+            "proyecto_id": proyecto_id
+        }
+        con_bd.actividades.insert_one(nueva_actividad)
 
-        # Luego, puedes realizar las operaciones necesarias, como almacenar los datos en la base de datos.
+        flash('Actividad creada con éxito', 'success')
+        return redirect(url_for('proyecto'))
 
-        # Una vez que hayas realizado las operaciones, podrías redirigir a otra página o mostrar un mensaje de éxito.
-        flash('Equipo asignado con éxito', 'success')
-        return redirect(url_for('proyectos'))
+@app.route('/editar_estado/<proyecto_id>', methods=['GET', 'POST'])
+def editar_estado(proyecto_id):
+    if request.method == 'POST':
+        nuevo_estado = request.form.get("nuevo_estado")
 
-    # Si el método de solicitud es GET, puedes mostrar el formulario para asignar el equipo
-    # y permitir al usuario seleccionar miembros y proporcionar detalles.
+        # Actualiza el estado del proyecto en la base de datos
+        proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+        proyecto["estado"] = nuevo_estado
+        con_bd.proyectos.update_one({"_id": ObjectId(proyecto_id)}, {"$set": proyecto})
 
-    # Debes asegurarte de que "proyecto_id" se pase a la plantilla para que lo uses en el formulario si es necesario.
-    return render_template('formulario_asignar_equipo.html', proyecto_id=proyecto_id)
+        flash('Estado del proyecto actualizado', 'success')
+        return redirect(url_for('proyecto'))
+
+    # Obtén el proyecto que se va a editar y pasa su estado actual al formulario
+    proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+    estado_actual = proyecto.get("estado")
+
+    return render_template('editar_estado.html', proyecto_id=proyecto_id, estado_actual=estado_actual)
+
+@app.route('/eliminar_proyecto/<proyecto_id>')
+def eliminar_proyecto(proyecto_id):
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    
+    # Agrega la lógica para eliminar el proyecto en función de su ID
+    proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+
+    if proyecto:
+        con_bd.proyectos.delete_one({"_id": ObjectId(proyecto_id)})
+        flash('Proyecto eliminado con éxito', 'success')
+    else:
+        flash('Proyecto no encontrado', 'danger')
+    
+    return redirect(url_for('index'))
 
 @app.route('/notificar_equipo/<proyecto_id>', methods=['GET', 'POST'])
 def notificar_equipo(proyecto_id):
