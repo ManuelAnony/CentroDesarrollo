@@ -1,6 +1,8 @@
 # CentroDesarrollo
 
-![Imagen de proyecto](images/logo.jfif)
+<p align="center">
+  <img src="images/logo.jfif" alt="Logo del Proyecto" width="200">
+</p>
 ## Requisitos previos
 
 - Python 3.x instalado en tu sistema.
