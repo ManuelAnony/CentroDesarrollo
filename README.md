@@ -8,19 +8,22 @@
 ## Configuración del Entorno Virtual
 
 1. Abre una terminal y navega hasta el directorio raíz de tu proyecto.
+
 2. Crea un nuevo entorno virtual ejecutando el siguiente comando:
 
-
-python3 -m venv venv
+    python3 -m venv venv
 
 
 3. Activa el entorno virtual. En sistemas Unix/Linux/macOS:
+    
     source venv/bin/activate
 
 En Windows:
+    
     .\venv\Scripts\activate
     
-    si no ejecuta dar permisos con el siguiente comando:
+si no ejecuta dar permisos con el siguiente comando:
+
     Set-ExecutionPolicy RemoteSigned -Scope Process
 
 
