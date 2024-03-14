@@ -7,6 +7,17 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+        <style>
+          /* Estilos para el mensaje de error */
+          .error-message {
+              color: red;
+              display: none; /* Ocultar por defecto */
+              position: absolute;
+              top: 100%;
+              left: 0;
+              font-size: 0.8em;
+          }
+        </style>
     </head>
     <body>
         <div class="container-left">
@@ -63,6 +74,7 @@
                             name="nit"
                             required
                           />
+                          <div class="error-message" id="nitError">Mensaje de error</div>
                         </div>
                         <div class="field">
                           <svg 
@@ -155,6 +167,8 @@
                           required 
                           />
                         </div>
+                        
+
                         <div class="btn">
                           
                           <button class="button2" >Registrate</button>
@@ -186,6 +200,78 @@
     
     
         <script src="" async defer></script>
+        
+        <script>
+         // Función para validar el campo de NIT para que solo permita números
+         document.getElementById('nit').addEventListener('input', function() {
+          var nitInput = document.getElementById('nit');
+          var nitError = document.getElementById('nitError');
+          var regex = /^[0-9]*$/; // Expresión regular para validar solo números
+
+          if (!regex.test(nitInput.value)) {
+              nitError.textContent = 'El NIT solo puede contener números.';
+              nitError.style.display = 'block';
+          } else {
+              nitError.style.display = 'none';
+          }
+       });
+
+           // Función para mostrar el primer error en el formulario
+        function showFirstError(errors) {
+          // Recorremos los errores
+          for (const error in errors) {
+              if (errors.hasOwnProperty(error)) {
+                  // Si hay un error, lo mostramos y salimos de la función
+                  if (errors[error]) {
+                      alert(errors[error]);
+                      return;
+                  }
+              }
+          }
+      }
+        // Función para permitir únicamente números en el campo NIT
+        function allowOnlyNumbers(event) {
+          const charCode = event.keyCode;
+          if (charCode < 48 || charCode > 57) {
+              event.preventDefault();
+          }
+      }
+      // Escuchamos el envío del formulario
+      document.getElementById('registrationForm').addEventListener('submit', function(event) {
+          // Obtenemos los valores de los campos
+          const nombreEmpresa = document.getElementById('nombreEmpresa').value.trim();
+          const nit = document.getElementById('nit').value.trim();
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
+          const confirmPassword = document.getElementById('confirmPassword').value;
+
+          // Objeto para almacenar los errores
+          const errors = {};
+
+          // Validaciones
+          if (nombreEmpresa.length < 3) {
+              errors['nombreEmpresa'] = "El nombre de la empresa debe tener al menos 3 caracteres.";
+          }
+          if (nit.length < 5) {
+              errors['nit'] = "El NIT debe tener al menos 5 caracteres.";
+          }
+          if (!email.match(/[^@]+@[^@]+\.[^@]+/)) {
+              errors['email'] = "El correo electrónico no es válido.";
+          }
+          if (password.length < 8) {
+              errors['password'] = "La contraseña debe tener al menos 8 caracteres.";
+          }
+          if (password !== confirmPassword) {
+              errors['confirmPassword'] = "Las contraseñas no coinciden.";
+          }
+
+          // Si hay errores, prevenimos el envío del formulario y mostramos el primer error
+          if (Object.values(errors).some(error => error)) {
+              event.preventDefault();
+              showFirstError(errors);
+          }
+      });
+        </script>
     </body>
     
 </html>

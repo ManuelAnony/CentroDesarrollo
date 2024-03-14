@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from config import *
+import re 
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'
@@ -16,27 +17,47 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
 
+        # Validar el formato del correo electrónico utilizando una expresión regular
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            flash('Por favor, ingresa una dirección de correo electrónico válida.', 'danger')
+            return redirect(url_for('login'))
+
         usuario = con_bd.usuarios.find_one({"email": email})
         
         if usuario and check_password_hash(usuario["password"], password):
             session['email'] = usuario['email']
-            #return redirect(url_for('index'))
             if usuario.get("rol") == "Administrador":
-                 #Usuario es un administrador, redirigir a la página de administrador
                  flash('Inicio de sesión exitoso como administrador', 'success')
                  return redirect(url_for('index'))
             elif usuario.get("rol") == "Desarrollador":
-                    #Usuario no es administrador, redirigir a la página de proyectos
-                    flash('Inicio de sesión exitoso como usuario', 'success')
-                    return redirect(url_for('proyecto'))
+                flash('Inicio de sesión exitoso como usuario', 'success')
+                return redirect(url_for('proyecto'))
             elif usuario.get("rol") == "Empresa":
-                    #Usuario no es administrador, redirigir a la página de proyectos
-                    flash('Inicio de sesión exitoso como usuario', 'success')
-                    return redirect(url_for('dashcompany'))
+                flash('Inicio de sesión exitoso como usuario', 'success')
+                return redirect(url_for('dashcompany'))
         else:   
             flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
 
     return render_template('login.html')
+
+# Función para validar la complejidad de la contraseña
+def validar_contraseña(password):
+    # Al menos 8 caracteres
+    if len(password) < 8:
+        return False
+    # Al menos un número
+    if not re.search(r"\d", password):
+        return False
+    # Al menos una letra minúscula
+    if not re.search(r"[a-z]", password):
+        return False
+    # Al menos una letra mayúscula
+    if not re.search(r"[A-Z]", password):
+        return False
+    # Al menos un carácter especial
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
 
 @app.route('/registroEmpresa', methods=['GET', 'POST'])
 def registroEmpresa():
@@ -44,28 +65,43 @@ def registroEmpresa():
         nombreEmpresa = request.form.get("nombreEmpresa")
         nit = request.form.get("nit")
         administrador = request.form.get("administrador")
-        email = request.form.get("email")        
+        email = request.form.get("email")
         password = request.form.get("password")
+        confirmar_password = request.form.get("confirmar_password")
         admin = "Empresa"
 
+        # Validar formato de correo electrónico
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            flash("El correo electrónico no es válido.")
+            return redirect(url_for('registroEmpresa'))
+
+        # Verificar si las contraseñas coinciden
+        if password != confirmar_password:
+            flash("Las contraseñas no coinciden.")
+            return redirect(url_for('registroEmpresa'))
+
+        # Validar complejidad de la contraseña
+        if not validar_contraseña(password):
+            flash("La contraseña debe contener al menos 8 caracteres, un número, una letra minúscula, una letra mayúscula y un carácter especial.")
+            return redirect(url_for('registroEmpresa'))
+
         existe_usuario = con_bd.usuarios.find_one({"email": email})
-        
+
         if existe_usuario:
-            return "El usuario ya existe. Por favor, inicia sesión o utiliza otro correo electrónico."
+            flash("El usuario ya existe. Por favor, inicia sesión o utiliza otro correo electrónico.")
+            return redirect(url_for('registroEmpresa'))
         else:
-            # Utiliza generate_password_hash para cifrar la contraseña antes de almacenarla
             hashed_password = generate_password_hash(password)
-            
             nuevo_usuario = {
                 "nombreEmpresa": nombreEmpresa,
                 "nit": nit,
                 "administrador": administrador,
                 "email": email,
-                "password": hashed_password,  # Almacena la contraseña cifrada
+                "password": hashed_password,
                 "rol": admin
             }
-            con_bd.usuarios.insert_one(nuevo_usuario) 
-            return redirect(url_for('dashcompany'))  
+            con_bd.usuarios.insert_one(nuevo_usuario)
+            return redirect(url_for('dashcompany'))
 
     return render_template('registro.html')
 
@@ -270,33 +306,6 @@ def registrar_proyecto():
 
         flash('Proyecto registrado con éxito', 'success')
         return redirect(url_for('index'))
-
-@app.route('/asignar_equipo', methods=['GET'])
-def mostrar_formulario_asignar_equipo():
-    # Obtén la lista de usuarios con el rol "Desarrollador" desde tu base de datos
-    usuarios_desarrolladores = con_bd.usuarios.find({"rol": "Desarrollador"})
-
-    return render_template('asignar_equipo.html', usuarios=usuarios_desarrolladores)
-
-@app.route('/proyecto')
-def proyecto():
-    if 'email' not in session:
-        return redirect(url_for('login'))
-
-    # Consulta para obtener los proyectos asignados al administrador
-    proyectos_cursor = con_bd.proyectos.find({"miembros_equipo": session['email']})
-    proyectos = list(proyectos_cursor)
-
-    # Consulta para obtener las actividades relacionadas con cada proyecto
-    actividades_por_proyecto = {}  # Un diccionario para almacenar actividades por proyecto
-
-    for proyecto in proyectos:
-        actividades_cursor = con_bd.actividades.find({"proyecto_id": proyecto['_id']})
-        actividades = list(actividades_cursor)
-        actividades_por_proyecto[proyecto['_id']] = actividades
-
-    return render_template('proyecto.html', proyectos=proyectos, actividades_por_proyecto=actividades_por_proyecto)
-
 @app.route('/crear_actividad', methods=['POST'])
 def crear_actividad():
     if request.method == 'POST':
@@ -317,7 +326,7 @@ def crear_actividad():
 
         flash('Actividad creada con éxito', 'success')
         return redirect(url_for('proyecto'))
-
+    
 @app.route('/editar_estado/<proyecto_id>', methods=['GET', 'POST'])
 def editar_estado(proyecto_id):
     if request.method == 'POST':
@@ -352,6 +361,48 @@ def eliminar_proyecto(proyecto_id):
         flash('Proyecto no encontrado', 'danger')
     
     return redirect(url_for('index'))
+    
+@app.route('/proyecto')
+def proyecto():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    # Consulta para obtener los proyectos asignados al administrador
+    proyectos_cursor = con_bd.proyectos.find({"miembros_equipo": session['email']})
+    proyectos = list(proyectos_cursor)
+
+    # Consulta para obtener las actividades relacionadas con cada proyecto
+    actividades_por_proyecto = {}  # Un diccionario para almacenar actividades por proyecto
+
+    for proyecto in proyectos:
+        actividades_cursor = con_bd.actividades.find({"proyecto_id": proyecto['_id']})
+        actividades = list(actividades_cursor)
+        actividades_por_proyecto[proyecto['_id']] = actividades
+
+    return render_template('proyecto.html', proyectos=proyectos, actividades_por_proyecto=actividades_por_proyecto)
+
+
+@app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
+def asignar_equipo(proyecto_id):
+    if request.method == 'POST':
+        # Aquí puedes procesar la información del formulario para asignar el equipo al proyecto.
+        # Recuerda que necesitarás usar la variable "proyecto_id" para identificar el proyecto.
+
+        # Por ejemplo, puedes acceder a los datos del formulario de esta manera:
+        nombre_equipo = request.form.get("nombre_equipo")
+        miembros = request.form.getlist("miembros")  # Si tienes una lista de miembros
+
+        # Luego, puedes realizar las operaciones necesarias, como almacenar los datos en la base de datos.
+
+        # Una vez que hayas realizado las operaciones, podrías redirigir a otra página o mostrar un mensaje de éxito.
+        flash('Equipo asignado con éxito', 'success')
+        return redirect(url_for('proyectos'))
+
+    # Si el método de solicitud es GET, puedes mostrar el formulario para asignar el equipo
+    # y permitir al usuario seleccionar miembros y proporcionar detalles.
+
+    # Debes asegurarte de que "proyecto_id" se pase a la plantilla para que lo uses en el formulario si es necesario.
+    return render_template('formulario_asignar_equipo.html', proyecto_id=proyecto_id)
 
 @app.route('/notificar_equipo/<proyecto_id>', methods=['GET', 'POST'])
 def notificar_equipo(proyecto_id):
