@@ -1,5 +1,6 @@
 # CentroDesarrollo
 
+![Imagen de proyecto](images/logo.jfif)
 ## Requisitos previos
 
 - Python 3.x instalado en tu sistema.
