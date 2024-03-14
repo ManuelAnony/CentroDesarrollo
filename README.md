@@ -11,10 +11,12 @@
 
 2. Crea un nuevo entorno virtual ejecutando el siguiente comando:
     
+    
     python3 -m venv venv
 
 
 3. Activa el entorno virtual. En sistemas Unix/Linux/macOS:
+    
     
     source venv/bin/activate
 
@@ -33,12 +35,15 @@ si no ejecuta dar permisos con el siguiente comando:
 
 Para instalar las dependencias del proyecto, utiliza el archivo `requirements.txt` proporcionado. Ejecuta el siguiente comando:
 
-pip install -r requirements.txt
+    
+    pip install -r requirements.txt
 
 
 ## Ejecución del Proyecto
 
 Una vez que todas las dependencias estén instaladas, puedes ejecutar el proyecto Flask. Asegúrate de que estás dentro del entorno virtual. Ejecuta el siguiente comando:
+    
+    
     py .\src\app.py o flask run
 
 Esto iniciará el servidor de desarrollo de Flask. Puedes acceder a la aplicación abriendo un navegador web y navegando a `http://localhost:5000`.
