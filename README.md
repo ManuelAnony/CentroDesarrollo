@@ -10,7 +10,7 @@
 1. Abre una terminal y navega hasta el directorio raíz de tu proyecto.
 
 2. Crea un nuevo entorno virtual ejecutando el siguiente comando:
-
+    
     python3 -m venv venv
 
 
