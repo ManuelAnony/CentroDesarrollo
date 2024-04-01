@@ -105,30 +105,57 @@ def registroEmpresa():
 
     return render_template('registro.html')
 
-@app.route('/registro', methods=['GET', 'POST'])
-def registro():
+@app.route('/registroEquipo', methods=['GET', 'POST'])
+def registroEquipo():
     if request.method == 'POST':
+        nombreDesarrollador = request.form.get("nombreDesarrollador")
         email = request.form.get("email")        
         password = request.form.get("password")
-        admin = "Desarrollador"
+        confirmar_password = request.form.get("confirmar_password")
+        rol = request.form.get("rol")
+        
+        # Validar formato de correo electrónico
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            flash("El correo electrónico no es válido.")
+            print("El correo electrónico no es válido.")
+            return redirect(url_for('index'))
 
+        # Verificar si las contraseñas coinciden
+        if password != confirmar_password:
+            flash("Las contraseñas no coinciden.")
+            print("Contraseña no coincide")
+            return redirect(url_for('index'))
+        
+        # Validar complejidad de la contraseña
+        if not validar_contraseña(password):
+            flash("La contraseña debe contener al menos 8 caracteres, un número, una letra minúscula, una letra mayúscula y un carácter especial.")
+            print("La contraseña debe contener al menos 8 caracteres, un número, una letra minúscula, una letra mayúscula y un carácter especial.")
+            return redirect(url_for('index'))
+        
         existe_usuario = con_bd.usuarios.find_one({"email": email})
         
         if existe_usuario:
             return "El usuario ya existe. Por favor, inicia sesión o utiliza otro correo electrónico."
         else:
             # Utiliza generate_password_hash para cifrar la contraseña antes de almacenarla
-            hashed_password = generate_password_hash(password, method='sha256')
+            hashed_password = generate_password_hash(password)
+            
+            print(nombreDesarrollador)
+            print(email)
+            print(hashed_password)
+            print(rol)
             
             nuevo_usuario = {
+                
+                "nombreDesarrollador": nombreDesarrollador,
                 "email": email,
                 "password": hashed_password,  # Almacena la contraseña cifrada
-                "rol": admin
+                "rol": rol
             }
             con_bd.usuarios.insert_one(nuevo_usuario) 
             return redirect(url_for('index'))  
 
-    return render_template('registroequipo.html')
+    return render_template('index.html')
 
 def obtener_datos_empresa(email):
     try:
@@ -138,7 +165,6 @@ def obtener_datos_empresa(email):
     except Exception as e:
         print(f"Error al obtener datos de la empresa: {e}")
         return None
-
 
 @app.route('/dashcompany')
 def dashcompany():
@@ -213,8 +239,6 @@ def obtener_solicitudes(email_empresa):
         print(f"Error al obtener las solicitudes: {e}")
         return []
 
-
-
 @app.route('/empresas')
 def ver_empresas():
     if 'email' not in session:
@@ -258,10 +282,6 @@ def ver_solicitudes():
 
     return render_template('dashboard.html', solicitudes=solicitudes, nombre_empresa=nombre_empresa, nit=nit, administrador=administrador, email_empresa=email_empresa)
 
-
-
-
-
 # Ruta para cerrar sesión
 @app.route('/logout')
 def logout():
@@ -277,9 +297,19 @@ def index():
     if 'email' not in session:
         return redirect(url_for('login'))
     
+    # Obtener empresas registradas
+    empresas = con_bd.usuarios.find({"rol": "Empresa"}, {"_id": 0, "nombreEmpresa": 1})
+    
+    # Obtener solicitudes de la empresa actual
+    solicitudes = obtener_solicitudes_empresa(session['email'])  
+    
+    # Obtener desarrolladores registrados
+    desarrolladores = con_bd.usuarios.find({"rol": "Desarrollador"}, {"_id": 0, "nombreDesarrollador": 1})
+
     # Obtener proyectos en curso desde la base de datos
     proyectos = con_bd.proyectos.find()
-    return render_template('index.html', proyectos=proyectos)
+    return render_template('index.html', proyectos=proyectos, empresas=empresas, solicitudes=solicitudes, desarrolladores=desarrolladores )
+
 @app.route('/registrar_proyecto', methods=['POST'])
 def registrar_proyecto():
     if 'email' not in session:
