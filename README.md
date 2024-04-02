@@ -60,24 +60,20 @@ Para ejecutar este proyecto en un contenedor Docker, sigue estos pasos:
 2. Clona este repositorio en tu máquina local:
 
     ```bash
-    git clone https://github.com/ManuelAnony/CentroDesarrollo
+    git clone https://github.com/tu-usuario/tu-proyecto.git
     ```
+
 3. Navega al directorio raíz de tu proyecto:
 
     ```bash
     cd tu-proyecto
     ```
-4.   Construye la imagen Docker ejecutando el siguiente comando:
+Construye la imagen Docker ejecutando el siguiente comando:
 
     ```bash
     docker build -t centro_desarrollo .
     ```
-5. Navega al directorio raíz de tu proyecto:
-
-    ```bash
-    cd tu-proyecto
-    ```
-6. Una vez que la imagen se haya construido correctamente, ejecuta el contenedor con el siguiente comando:
+5. Una vez que la imagen se haya construido correctamente, ejecuta el contenedor con el siguiente comando:
 
     ```bash
     docker run -p 5000:5000 centro_desarrollo
