@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block title %}Panel de Proyectos{% endblock %}
+
+{% block content %}
+<div class="container pt-5">
+    <div class="row">
+            <div class="card card-body">
+                <h1>Editar Estado del Proyecto</h1>
+    <form method="POST">
+        <label for="nuevo_estado">Nuevo Estado:</label>
+        <select id="nuevo_estado" name="nuevo_estado">
+            <option value="pendiente">Pendiente</option>
+            <option value="en_proceso">En Proceso</option>
+            <option value="completado">Completado</option>
+        </select>
+        <button type="submit">Guardar Cambios</button>
+        </form>
+        
+    </div>
+    </div>
+</div>
+{% endblock %}

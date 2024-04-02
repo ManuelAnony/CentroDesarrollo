@@ -102,7 +102,7 @@
                                         <td>{{ proyecto.estado }}</td>
                                         <td>
                                             <a href="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-primary btn-sm">Asignar Equipo</a>
-                                            <a href="{{ url_for('notificar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-success btn-sm">Notificar Equipo</a>
+                                            <!-- <a href="{{ url_for('notificar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-success btn-sm">Notificar Equipo</a> -->
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -115,9 +115,9 @@
         </div>
       
         <!-- Contenido de Vista de Solicitudes -->
-        <div id="solicitudes" class="tab-pane fade" role="tabpanel" aria-labelledby="tabSolicitudes">
-            <div class="container pt-5">
-                <div class="card card-body">
+    <div id="solicitudes" class="tab-pane fade" role="tabpanel" aria-labelledby="tabSolicitudes">
+        <div class="container pt-5">
+            <div class="card card-body">
                 <h2>Solicitudes</h2>
                 <!-- Tabla para mostrar las solicitudes -->
                 <table class="table table-striped">
@@ -126,64 +126,74 @@
                             <th>Nombre de la Solicitud</th>
                             <th>Descripción</th>
                             <th>Fecha</th>
-                            <th>Correo</th>
-                            <th>Empresa</th>
+                            <!--<th>Porcentaje Completado</th>-->
+                            <th>Empresa</th> <!-- Agregar columna para el nombre de la empresa -->
+                            <td>Opciones</td>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for solicitud in solicitudes %}
-                        <tr>
-                            <td>{{ solicitud.nombre_solicitud }}</td>
-                            <td>{{ solicitud.descripcion_solicitud }}</td>
-                            <td>{{ solicitud.fecha }}</td>
-                            <td>{{ solicitud.correo_empresa }}</td>
-                            <td>{{ solicitud.empresa }}</td>
-                        </tr>
-                        {% endfor %}
+                        {% if solicitudes %}
+                            {% for solicitud in solicitudes %}
+                                <tr>
+                                    <td>{{ solicitud['nombre_solicitud'] }}</td>
+                                    <td>{{ solicitud['descripcion_solicitud'] }}</td>
+                                    <td>{{ solicitud['fecha'] }}</td>
+                                    <!--<td>{{ solicitud['porcentaje_solicitud'] }}%</td>-->
+                                    <td>{{ solicitud['email'] }}</td> <!-- Mostrar el nombre de la empresa -->
+                                    <td>Ver solicitud</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No hay solicitudes disponibles.</td> <!-- Ajustar el colspan según el número de columnas -->
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-
-
-
-
+    
         <!-- Contenido de Empresas -->
         <div id="empresas" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab">
             <div class="container pt-5">
                 <div class="card card-body">
-                <h2>Información de la Empresa</h2>
-                <table class="table table-striped">
-                    <tr>
-                        <th>Nombre de la Empresa</th>
-                        <td>{{ nombre_empresa }}</td>
-                    </tr>
-                    <tr>
-                        <th>NIT</th>
-                        <td>{{ nit }}</td>
-                    </tr>
-                    <tr>
-                        <th>Administrador</th>
-                        <td>{{ administrador }}</td>
-                    </tr>
-                    <tr>
-                        <th>Email de la Empresa</th>
-                        <td>{{ email_empresa }}</td>
-                    </tr>
-                </table>
+                    <h2>Información de las Empresas</h2>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre de la Empresa</th>
+                                <th>NIT</th>
+                                <th>Administrador</th>
+                                <th>Email de la Empresa</th>
+                                <td>Opciones</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios_empresa %}
+                            <tr>
+                                <td>{{ usuario.nombreEmpresa }}</td>
+                                <td>{{ usuario.nit }}</td>
+                                <td>{{ usuario.administrador }}</td>
+                                <td>{{ usuario.email }}</td>
+                                <td>Eliminar</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
+        
 
 
 
         <!-- Contenido de Registrar Desarrollador -->
         <div id="registrarDesarrollador" class="tab-pane fade"  role="tabpanel" aria-labelledby="registrarDesarrollador-tab">
-            <div class="container-left">
-            <div class="centered-object">
-                <div class="card">
-                    <div class="card2">
+            <div class="container pt-5">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card card-body">
                         <form class="form" method="POST" action="{{ url_for('registroEquipo') }}">
                         <p id="heading">Registro Desarrollador</p>
                         <div class="field">
@@ -210,10 +220,7 @@
                             name="nombreDesarrollador"
                             required
                           />
-                        </div>
-
-                        
-                        
+                        </div>                      
                         <div class="field">
                           <svg
                             viewBox="0 0 16 16"
@@ -245,7 +252,6 @@
                                 <!--<option value="completado">Lider de Equipo</option>-->
                             </select>
                         </div>
-
                         <div class="field">
                           <svg
                             viewBox="0 0 16 16"
@@ -299,9 +305,63 @@
 
                       </form>
                     </div>
-                  </div>
-                  
+                </div>
+                    <div class="col-md-8">
+                    <div class="card card-body">
+                        <h2>Usuarios Registrados</h2>    
+                  <select id="seleccionarInfo">
+                    <option value="">Selecciona...</option>
+                    <option value="infoDesarrolladores">Desarrolladores</option>
+                    <option value="infoAdministradores">Administradores</option>
+                </select>
+                <div id="infoDesarrolladores" style="display: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre del Desarrollador</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th>Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in desarrolladores %}
+                                <tr>
+                                    <td>{{ usuario.nombreDesarrollador }}</td>
+                                    <td>{{ usuario.email }}</td>
+                                    <td>{{ usuario.rol }}</td>
+                                    <td>Eliminar</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="infoAdministradores" style="display: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre del Administrador</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th>Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios_admin %}
+                                <tr>
+                                    <td>{{ usuario.nombreDesarrollador }}</td>
+                                    <td>{{ usuario.email }}</td>
+                                    <td>{{ usuario.rol }}</td>
+                                    <td>Eliminar</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+                </div>
+            </div>
+        </div>
         </div>
         </div>
     </div>
@@ -321,6 +381,17 @@
             }
             // Agregar lógica adicional si es necesario para otras pestañas
         });
+    });
+
+    document.getElementById("seleccionarInfo").addEventListener("change", function() {
+        var seleccion = document.getElementById("seleccionarInfo").value;
+        if (seleccion === "infoDesarrolladores") {
+            document.getElementById("infoDesarrolladores").style.display = "block";
+            document.getElementById("infoAdministradores").style.display = "none";
+        } else if (seleccion === "infoAdministradores") {
+            document.getElementById("infoDesarrolladores").style.display = "none";
+            document.getElementById("infoAdministradores").style.display = "block";
+        }
     });
 </script>
 {% endblock %}

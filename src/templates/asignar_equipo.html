@@ -1,0 +1,56 @@
+{% extends 'layout.html' %}
+
+{% block title %}Dashboard {% endblock %}
+
+{% block content %}
+<div class="container pt-5">
+    <div class="row">
+        <div class="card card-body">
+            <h1>Asignar Equipo</h1>
+    <form method="POST">
+    
+        <div class="form-group">
+            <label for="nombre_equipo">Nombre del Equipo:</label>
+            <input type="text" id="nombre_equipo" name="nombre_equipo" required>
+        </div>
+        <div class="form-group">
+            <label for="cantidad_miembros">Cantidad de Miembros:</label>
+            <input type="number" id="cantidad_miembros" name="cantidad_miembros" min="1" required>
+        </div>
+        <div id="miembrosSelects">
+            <!-- Cuadros desplegables se generarán aquí -->
+        </div>
+        <br>
+        <button type="submit">Asignar Equipo</button>
+    </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var cantidadMiembros = document.getElementById("cantidad_miembros");
+    var miembrosSelects = document.getElementById("miembrosSelects");
+
+    cantidadMiembros.addEventListener("input", function () {
+        miembrosSelects.innerHTML = "";  // Limpiar cuadros desplegables anteriores
+        var cantidad = parseInt(cantidadMiembros.value);
+
+        for (var i = 0; i < cantidad; i++) {
+            var select = document.createElement("select");
+            select.name = "miembros_" + i;  // Nombre único para cada cuadro desplegable
+            select.required = true;
+
+            // Rellena las opciones con los usuarios registrados
+            {% for usuario in usuarios %}
+                var option = document.createElement("option");
+                option.value = "{{ usuario.email }}";
+                option.textContent = "{{ usuario.email }}";
+                select.appendChild(option);
+            {% endfor %}
+
+            miembrosSelects.appendChild(select);
+        }
+    });
+</script>
+{% endblock %}
+

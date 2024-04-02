@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, after_this_request
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from config import *
@@ -13,6 +13,18 @@ con_bd = Conexion()
 # Ruta para el inicio de sesión
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Verificar si el usuario ya ha iniciado sesión
+    if 'email' in session:
+        # Si el usuario ya ha iniciado sesión, redirigir a su página correspondiente según su rol
+        usuario = con_bd.usuarios.find_one({"email": session['email']})
+        if usuario:
+            if usuario.get("rol") == "Administrador":
+                 return redirect(url_for('index'))
+            elif usuario.get("rol") == "Desarrollador":
+                return redirect(url_for('proyecto'))
+            elif usuario.get("rol") == "Empresa":
+                return redirect(url_for('dashcompany'))
+
     if request.method == 'POST':
         email = request.form.get("email")
         password = request.form.get("password")
@@ -39,6 +51,13 @@ def login():
             flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
 
     return render_template('login.html')
+
+@app.after_request
+def add_header(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 # Función para validar la complejidad de la contraseña
 def validar_contraseña(password):
@@ -210,7 +229,7 @@ def enviar_solicitud():
                 "descripcion_solicitud": descripcion_solicitud,
                 "fecha": fecha_solicitud,
                 "porcentaje_solicitud": 0,
-                "email_empresa": session['email']  # Añadir el email de la empresa
+                "email": session['email']  # Añadir el email de la empresa
             }
 
             # Guardar la solicitud en la base de datos
@@ -230,10 +249,10 @@ def enviar_solicitud():
         flash('Error al enviar la solicitud', 'danger')
         return redirect(url_for('dashcompany'))
 
-def obtener_solicitudes(email_empresa):
+def obtener_solicitudes(email):
     try:
         # Obtén las solicitudes para la empresa específica desde la base de datos
-        solicitudes = con_bd.solicitudes.find({"email_empresa": email_empresa})
+        solicitudes = con_bd.solicitudes.find({"email": email})
         return list(solicitudes)
     except Exception as e:
         print(f"Error al obtener las solicitudes: {e}")
@@ -261,10 +280,9 @@ def ver_empresas():
         return "Error al obtener los datos de la empresa"
 
 
-def obtener_solicitudes_empresa(email_empresa):
+def obtener_solicitudes_empresa():
     try:
-        # Obtén las solicitudes para la empresa específica desde la base de datos
-        solicitudes = con_bd.solicitudes.find({"email_empresa": email_empresa})
+        solicitudes = con_bd.solicitudes.find()
         return list(solicitudes)
     except Exception as e:
         print(f"Error al obtener las solicitudes: {e}")
@@ -282,6 +300,28 @@ def ver_solicitudes():
 
     return render_template('dashboard.html', solicitudes=solicitudes, nombre_empresa=nombre_empresa, nit=nit, administrador=administrador, email_empresa=email_empresa)
 
+def obtener_usuarios_empresa():
+    try:
+        usuarios_empresa = con_bd.usuarios.find({"rol": "Empresa"})
+        return list(usuarios_empresa)
+    except Exception as e:
+        print(f"Error al obtener los usuarios de empresa: {e}")
+        return []
+def obtener_usuarios_desarrollador():
+    try:
+        usuarios_desarrollador= con_bd.usuarios.find({"rol": "Desarrollador"})
+        return list(usuarios_desarrollador)
+    except Exception as e:
+        print(f"Error al obtener los usuarios de empresa: {e}")
+        return []
+def obtener_usuarios_admin():
+    try:
+        usuarios_admin= con_bd.usuarios.find({"rol": "Administrador"})
+        return list(usuarios_admin)
+    except Exception as e:
+        print(f"Error al obtener los usuarios de empresa: {e}")
+        return []  
+    
 # Ruta para cerrar sesión
 @app.route('/logout')
 def logout():
@@ -298,17 +338,20 @@ def index():
         return redirect(url_for('login'))
     
     # Obtener empresas registradas
-    empresas = con_bd.usuarios.find({"rol": "Empresa"}, {"_id": 0, "nombreEmpresa": 1})
-    
+    #empresas = con_bd.usuarios.find({"rol": "Empresa"}, {"_id": 0, "nombreEmpresa": 1})
+    usuarios_empresa = obtener_usuarios_empresa()
     # Obtener solicitudes de la empresa actual
-    solicitudes = obtener_solicitudes_empresa(session['email'])  
+    # solicitudes = obtener_solicitudes_empresa(session['email'])  
+    solicitudes = obtener_solicitudes_empresa() 
+    
     
     # Obtener desarrolladores registrados
-    desarrolladores = con_bd.usuarios.find({"rol": "Desarrollador"}, {"_id": 0, "nombreDesarrollador": 1})
+    desarrolladores = obtener_usuarios_desarrollador()
 
+    usuarios_admin = obtener_usuarios_admin()    
     # Obtener proyectos en curso desde la base de datos
     proyectos = con_bd.proyectos.find()
-    return render_template('index.html', proyectos=proyectos, empresas=empresas, solicitudes=solicitudes, desarrolladores=desarrolladores )
+    return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin )
 
 @app.route('/registrar_proyecto', methods=['POST'])
 def registrar_proyecto():
@@ -412,29 +455,65 @@ def proyecto():
     return render_template('proyecto.html', proyectos=proyectos, actividades_por_proyecto=actividades_por_proyecto)
 
 
+# Ruta para el formulario de asignar equipo
 @app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
 def asignar_equipo(proyecto_id):
     if request.method == 'POST':
-        # Aquí puedes procesar la información del formulario para asignar el equipo al proyecto.
-        # Recuerda que necesitarás usar la variable "proyecto_id" para identificar el proyecto.
-
-        # Por ejemplo, puedes acceder a los datos del formulario de esta manera:
         nombre_equipo = request.form.get("nombre_equipo")
-        miembros = request.form.getlist("miembros")  # Si tienes una lista de miembros
+        cantidad_miembros = int(request.form.get("cantidad_miembros"))
+        miembros = []
 
-        # Luego, puedes realizar las operaciones necesarias, como almacenar los datos en la base de datos.
+        for i in range(cantidad_miembros):
+            miembro = request.form.get(f"miembros_{i}")
+            miembros.append(miembro)
 
-        # Una vez que hayas realizado las operaciones, podrías redirigir a otra página o mostrar un mensaje de éxito.
+        # Obtén la lista de usuarios con el rol "Desarrollador"
+        usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
+        usuarios = list(usuarios_cursor)
+
+        # Guarda la información en la base de datos (proyecto)
+        proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+        proyecto["nombre_equipo"] = nombre_equipo
+        proyecto["miembros_equipo"] = miembros
+        con_bd.proyectos.update_one({"_id": ObjectId(proyecto_id)}, {"$set": proyecto})
+
         flash('Equipo asignado con éxito', 'success')
-        return redirect(url_for('proyectos'))
+        return redirect(url_for('index'))
 
-    # Si el método de solicitud es GET, puedes mostrar el formulario para asignar el equipo
-    # y permitir al usuario seleccionar miembros y proporcionar detalles.
+    # Envia la lista de usuarios "Desarrollador" a la plantilla
+    usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
+    usuarios = list(usuarios_cursor)
 
-    # Debes asegurarte de que "proyecto_id" se pase a la plantilla para que lo uses en el formulario si es necesario.
-    return render_template('formulario_asignar_equipo.html', proyecto_id=proyecto_id)
+    return render_template('asignar_equipo.html', proyecto_id=proyecto_id, usuarios=usuarios)
 
 @app.route('/notificar_equipo/<proyecto_id>', methods=['GET', 'POST'])
+def notificar_equipo(proyecto_id):
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        # Obtén los datos del formulario
+        equipo_id = request.form.get('equipo_id')
+        mensaje = request.form.get('mensaje')
+
+        # Realiza la lógica para notificar al equipo, por ejemplo, enviar correos o notificaciones
+
+        flash(f'Notificación enviada al equipo {equipo_id} del proyecto {proyecto_id}', 'success')
+
+    # Puedes obtener más información sobre el proyecto, como el equipo asignado, a través de la base de datos aquí
+    # proyecto = con_bd.proyectos.find_one({"_id": proyecto_id})
+    # equipo = con_bd.equipos.find({"proyecto_id": proyecto_id})
+
+    return render_template('notificar_equipo.html', proyecto_id=proyecto_id)
+
+
+@app.route('/asignar_equipo', methods=['GET'])
+def mostrar_formulario_asignar_equipo():
+    # Obtén la lista de usuarios con el rol "Desarrollador" desde tu base de datos
+    usuarios_desarrolladores = con_bd.usuarios.find({"rol": "Desarrollador"})
+
+    return render_template('asignar_equipo.html', usuarios=usuarios_desarrolladores)
+
 def notificar_equipo(proyecto_id):
     if 'email' not in session:
         return redirect(url_for('login'))

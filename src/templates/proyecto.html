@@ -1,23 +1,73 @@
 {% extends 'layout.html' %}
 
-{% block title %}Iniciar Sesión{% endblock %}
+{% block title %}Panel de Proyectos{% endblock %}
 
 {% block content %}
+<div class="container pt-5">
+    <div class="row">
+        <div class="card card-body">
+        <h1>Panel de Proyectos</h1>
 
-<div class="container pt-5">
-    <div class="row">
-        <div class="card card-body">
-            <h1>Dashboard</h1>
-            <!-- Contenido específico del dashboard -->
+        <div class="container pt-5">
+            <h2>Crear Nueva Actividad</h2>
+            <form method="POST" action="/crear_actividad">
+                <input type="hidden" name="admin_email" value="{{ session['email'] }}">
+                <label for="nombre_actividad">Nombre de la Actividad:</label>
+                <input type="text" name="nombre_actividad" required>
+                <label for="fecha_vencimiento">Fecha de Vencimiento:</label>
+                <input type="date" name="fecha_vencimiento" required>
+                <label for="proyecto_id">Proyecto:</label>
+                <select name="proyecto_id" required>
+                    {% for proyecto in proyectos %}
+                        <option value="{{ proyecto._id }}">{{ proyecto.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Crear Actividad</button>
+            </form>
         </div>
-    </div>
-</div>
-<div class="container pt-5">
-    <div class="row">
+        
+        <br>
+        <br>
+        <h1>Panel de Proyectos Asignados</h1>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nombre del Proyecto</th>
+                    <th>Descripción</th>
+                    <th>Fecha de Inicio</th>
+                    <th>Fecha de Finalización</th>
+                    <th>Estado</th>
+                    <th>Actividades</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proyecto in proyectos %}
+                    <tr>
+                        <td>{{ proyecto.nombre }}</td>
+                        <td>{{ proyecto.descripcion }}</td>
+                        <td>{{ proyecto.fecha_inicio }}</td>
+                        <td>{{ proyecto.fecha_finalizacion }}</td>
+                        <td>{{ proyecto.estado }}<a href="{{ url_for('editar_estado', proyecto_id=proyecto._id) }}" class="btn btn-primary">Editar Estado</a></td>
+                        <td>
+                            <ul>
+                                {% for actividad in actividades_por_proyecto[proyecto['_id']] %}
+                                    <li>{{ actividad.nombre }} - {{ actividad.fecha_vencimiento }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
         <div class="card card-body">
-            <h2>Registrar Nuevo Proyecto</h2>
+                
             <a href="/logout">Cerrar Sesión</a> <!-- Agregado un enlace para cerrar sesión -->
         </div>
     </div>
+    
+    
+</div>
+</div>
 </div>
 {% endblock %}
