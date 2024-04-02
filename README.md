@@ -62,22 +62,27 @@ Para ejecutar este proyecto en un contenedor Docker, sigue estos pasos:
     ```bash
     git clone https://github.com/ManuelAnony/CentroDesarrollo
     ```
-3. Construye la imagen Docker ejecutando el siguiente comando:
-
-    ```bash
-    docker build -t centro_desarrollo .
-    ```
-4. Navega al directorio raíz de tu proyecto:
+3. Navega al directorio raíz de tu proyecto:
 
     ```bash
     cd tu-proyecto
     ```
-5. Una vez que la imagen se haya construido correctamente, ejecuta el contenedor con el siguiente comando:
+4.   Construye la imagen Docker ejecutando el siguiente comando:
+
+    ```bash
+    docker build -t centro_desarrollo .
+    ```
+5. Navega al directorio raíz de tu proyecto:
+
+    ```bash
+    cd tu-proyecto
+    ```
+6. Una vez que la imagen se haya construido correctamente, ejecuta el contenedor con el siguiente comando:
 
     ```bash
     docker run -p 5000:5000 centro_desarrollo
     ```
-6. Accede a tu aplicación Flask desde tu navegador web en la siguiente dirección:
+7. Accede a tu aplicación Flask desde tu navegador web en la siguiente dirección:
 
     ```
     http://localhost:5000
