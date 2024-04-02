@@ -51,4 +51,35 @@ Una vez que todas las dependencias estén instaladas, puedes ejecutar el proyect
 
 Esto iniciará el servidor de desarrollo de Flask. Puedes acceder a la aplicación abriendo un navegador web y navegando a `http://localhost:5000`.
 
+# Ejecucion en Docker
 
+Para ejecutar este proyecto en un contenedor Docker, sigue estos pasos:
+
+1. Asegúrate de tener Docker instalado en tu máquina. Si no lo tienes instalado, puedes descargarlo desde [Docker Hub](https://docs.docker.com/get-docker/).
+
+2. Clona este repositorio en tu máquina local:
+
+    ```bash
+    git clone https://github.com/ManuelAnony/CentroDesarrollo
+    ```
+3. Construye la imagen Docker ejecutando el siguiente comando:
+
+    ```bash
+    docker build -t centro_desarrollo .
+    ```
+4. Navega al directorio raíz de tu proyecto:
+
+    ```bash
+    cd tu-proyecto
+    ```
+5. Una vez que la imagen se haya construido correctamente, ejecuta el contenedor con el siguiente comando:
+
+    ```bash
+    docker run -p 5000:5000 centro_desarrollo
+    ```
+6. Accede a tu aplicación Flask desde tu navegador web en la siguiente dirección:
+
+    ```
+    http://localhost:5000
+    ```
+¡Eso es todo! Ahora tu aplicación Flask debería estar en funcionamiento dentro de un contenedor Docker.
