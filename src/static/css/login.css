@@ -1,176 +1,383 @@
-body {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    height: 100vh;
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans+HK:wght@100..900&family=Princess+Sofia&display=swap');
+@import url('./vars.css');
+
+body, html {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  font-family: "Montserrat", sans-serif;
 }
 
 /* Contenedor izquierdo más pequeño */
 .container-left {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: white;
-    padding: 70px;
-    box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--fondo--primario);
+  padding: 70px;
+  box-sizing: border-box;
+  box-shadow: 11px 0px 20px 0px #2a4f2e;
+  z-index: 100;
 }
 
 /* Contenedor derecho dividido en 4 contenedores */
 .container-right {
-    flex: 3;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: center;
-    background-color: black;
-    padding: 20px;
-    box-sizing: border-box;
+  flex: 3;
+  overflow: hidden;
+  width: 100% !important;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  background-color: rgb(255, 255, 255);
+  padding: 20px;
+  box-sizing: border-box;
+  flex-direction: column-reverse;
+  align-items: center;
+}
+
+.textInformation {
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  z-index: 100;
+
+}
+
+.textInformation h1 {
+  margin: 0 0 20px 0;
+  font-size: 60px;
+  width: 80%;
+  font-weight: bold;
+  text-transform: uppercase;
+  /* text-align: end; */
+  color: #214f26;
+
+}
+
+.textInformation p {
+  font-size: 25px;
+  width: 80%;
+  /* text-align: end; */
 }
 
 /* Contenedor interno derecho */
 .sub-container {
-    flex-basis: calc(50% - 20px); /* 50% width with margin between */
-    height: 70px; /* Adjust the height as needed */
-    /* background-color: lightcoral; */
-    margin: 10px;
+  /* flex-basis: calc(50% - 20px); */
+  /* 50% width with margin between */
+
+  /* Adjust the height as needed */
+  /* background-color: lightcoral; */
+  margin: 10px;
+  align-items: flex-end;
+  justify-content: flex-end;
+  height: 30%;
+}
+
+.sub-container img {
+  height: 150px;
+  width: 250px;
 }
 
 /* Estilo para el objeto en el contenedor izquierdo */
 .centered-object {
-    width: auto; /* Ajusta el ancho según tus necesidades */
-    height: auto; /* Ajusta la altura según tus necesidades */
-    
+  width: auto;
+  /* Ajusta el ancho según tus necesidades */
+  height: auto;
+  /* Ajusta la altura según tus necesidades */
+
 }
+
 .form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-left: 3em;
-    padding-right: 3em;
-    padding-bottom: 0.4em;
-    background-color: #171717;
-    border-radius: 25px;
-    transition: 0.4s ease-in-out;
-  }
-  
-  .card {
-    background-image: linear-gradient(163deg, #00ff75 0%, #3700ff 100%);
-    border-radius: 22px;
-    transition: all 0.3s;
-  }
-  
-  .card2 {
-    border-radius: 0;
-    transition: all 0.2s;
-  }
-  
-  .card2:hover {
-    transform: scale(0.98);
-    border-radius: 20px;
-  }
-  
-  .card:hover {
-    box-shadow: 0px 0px 30px 1px rgba(0, 255, 117, 0.3);
-  }
-  
-  #heading {
-    text-align: center;
-    margin: 2em;
-    color: rgb(255, 255, 255);
-    font-size: 1.2em;
-  }
-  
-  .field {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5em;
-    border-radius: 25px;
-    padding: 0.6em;
-    border: none;
-    outline: none;
-    color: white;
-    background-color: #171717;
-    box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
-  }
-  
-  .input-icon {
-    height: 1.3em;
-    width: 1.3em;
-    fill: white;
-  }
-  
-  .input-field {
-    background: none;
-    border: none;
-    outline: none;
-    width: 100%;
-    color: #d3d3d3;
-  }
-  
-  .form .btn {
-    display: flex;
-    justify-content: center;
-    flex-direction: row;
-    margin-top: 2.5em;
-  }
-  
-  .button1 {
-    padding: 0.5em;
-    padding-left: 1.1em;
-    padding-right: 1.1em;
-    border-radius: 5px;
-    margin-right: 0.5em;
-    border: none;
-    outline: none;
-    transition: 0.4s ease-in-out;
-    background-color: #252525;
-    color: white;
-  }
-  
-  .button1:hover {
-    background-color: black;
-    color: white;
-  }
-  
-  .button2 {
-    padding: 0.5em;
-    padding-left: 2.3em;
-    padding-right: 2.3em;
-    border-radius: 5px;
-    border: none;
-    outline: none;
-    transition: 0.4s ease-in-out;
-    background-color: #252525;
-    color: white;
-  }
-  
-  .button2:hover {
-    background-color: black;
-    color: white;
-  }
-  
-  .button3 {
-    margin-bottom: 3em;
-    padding: 0.5em;
-    border-radius: 5px;
-    border: none;
-    outline: none;
-    transition: 0.4s ease-in-out;
-    background-color: #252525;
-    color: white;
-  }
-  
-  .button3:hover {
-    background-color: red;
-    color: white;
-  }
-  
-  img {
-    max-width: 150%; /* Ajusta el ancho máximo al 100% del contenedor padre */
-    height: auto; /* Permite que la altura se ajuste automáticamente para mantener la proporción */
-    display: block; /* Elimina el espacio adicional por debajo de la imagen */
-    margin: auto; /* Centra la imagen horizontalmente */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 3em;
+  padding-right: 3em;
+  padding-bottom: 0.4em;
+  background-color: var(--fondo--terciario);
+  border-radius: 25px;
+  transition: 0.4s ease-in-out;
+  box-shadow: 0px 0px 20px 0px #ffffff;
+
+}
+
+.card {
+  background-image: linear-gradient(163deg, #00ff75 0%, #3700ff 100%);
+  border-radius: 22px;
+  transition: all 0.3s;
+}
+
+.card2 {
+  border-radius: 0;
+  transition: all 0.2s;
+}
+
+.card2:hover {
+  transform: scale(0.98);
+  border-radius: 20px;
+}
+
+.card:hover {
+  box-shadow: 0px 0px 30px 1px rgba(0, 255, 117, 0.3);
+}
+
+#heading {
+  text-align: center;
+  margin: 2em;
+  color: rgb(255, 255, 255);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 40px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  border-radius: 25px;
+  padding: 0.6em;
+  border: none;
+  outline: none;
+  color: #2b2b2b;
+  background-color: #ffffff;
+  /* box-shadow: inset 2px 5px 10px rgb(5, 5, 5); */
+}
+
+/* ajustes de los inputs */
+.field input {
+  color: #2b2b22 !important;
+  background: var(--fondo--blanco) !important;
+}
+
+.input-icon {
+  height: 1.3em;
+  width: 1.3em;
+  fill: #372c2c;
+}
+
+.input-field {
+  background: none;
+  border: none;
+  outline: none;
+  width: 100%;
+  color: #d3d3d3;
+}
+
+.form .btn {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  margin-top: 2.5em;
+}
+
+.button1 {
+  padding: 0.5em;
+  padding-left: 1.1em;
+  padding-right: 1.1em;
+  border-radius: 5px;
+  margin-right: 0.5em;
+  border: none;
+  outline: none;
+  transition: 0.4s ease-in-out;
+  background-color: #252525;
+  color: white;
+}
+
+.button1:hover {
+  background-color: black;
+  color: white;
+}
+
+.button2 {
+  padding: 0.5em;
+  padding-left: 2.3em;
+  padding-right: 2.3em;
+  border-radius: 5px;
+  border: none;
+  outline: none;
+  transition: 0.4s ease-in-out;
+  background-color: #252525;
+  color: white;
+}
+
+.button2:hover {
+  background-color: black;
+  color: white;
+}
+
+.button3 {
+  margin-bottom: 3em;
+  padding: 0.5em;
+  border-radius: 5px;
+  border: none;
+  outline: none;
+  transition: 0.4s ease-in-out;
+  background-color: #252525;
+  color: white;
+}
+
+.button3:hover {
+  background-color: red;
+  color: white;
+}
+
+img {
+  max-width: 150%;
+  /* Ajusta el ancho máximo al 100% del contenedor padre */
+  height: auto;
+  /* Permite que la altura se ajuste automáticamente para mantener la proporción */
+  display: block;
+  /* Elimina el espacio adicional por debajo de la imagen */
+  margin: auto;
+  /* Centra la imagen horizontalmente */
+}
+
+button {
+  background: var(--fondo--botones) !important;
+  transition: all 0.2s !important;
+  -webkit-transition: all 0.2s !important;
+  -moz-transition: all 0.2s !important;
+  -ms-transition: all 0.2s !important;
+  -o-transition: all 0.2s !important;
+}
+
+button:hover {
+  background: #88b387 !important;
+}
+
+
+.animation {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.cube {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+
+  background-color: rgb(209, 255, 207);
+  margin: 5px;
+  opacity: 0;
+  animation: fadeIn 4s infinite forwards;
+  -webkit-animation: fadeIn 10s infinite ;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  -ms-border-radius: 50%;
+  -o-border-radius: 50%;
+}
+
+.cube img {
+  width: 40px;
+  height: 40px;
+}
+
+.cube:nth-child(1) {
+  transform: scale(4);
+  animation-delay: 0.7s;
+  -webkit-transform: scale(4);
+  -moz-transform: scale(4);
+  -ms-transform: scale(4);
+  -o-transform: scale(4);
+}
+
+.cube:nth-child(2) {
+  transform: scale(0.4);
+  animation-delay: 1s;
+  -webkit-transform: scale(0.4);
+  -moz-transform: scale(0.4);
+  -ms-transform: scale(0.4);
+  -o-transform: scale(0.4);
+}
+
+.cube:nth-child(3) {
+  transform: scale(0.8);
+  animation-delay: 1.5s;
+  -webkit-transform: scale(0.8);
+  -moz-transform: scale(0.8);
+  -ms-transform: scale(0.8);
+  -o-transform: scale(0.8);
+}
+
+.cube:nth-child(4) {
+  transform: scale(1.2);
+  animation-delay: 2.5s;
+  -webkit-transform: scale(1.2);
+  -moz-transform: scale(1.2);
+  -ms-transform: scale(1.2);
+  -o-transform: scale(1.2);
+}
+
+.cube:nth-child(5) {
+  transform: scale(0.3);
+  animation-delay: 0.7s;
+  -webkit-transform: scale(0.3);
+  -moz-transform: scale(0.3);
+  -ms-transform: scale(0.3);
+  -o-transform: scale(0.3);
+}
+
+.cube:nth-child(6) {
+  transform: scale(1.5);
+  animation-delay: 0s;
+  -webkit-transform: scale(1.5);
+  -moz-transform: scale(1.5);
+  -ms-transform: scale(1.5);
+  -o-transform: scale(1.5);
+}
+
+.cube:nth-child(7) {
+  transform: scale(0.5);
+  animation-delay: 1.2s;
+  -webkit-transform: scale(0.5);
+  -moz-transform: scale(0.5);
+  -ms-transform: scale(0.5);
+  -o-transform: scale(0.5);
+}
+
+@keyframes fadeIn {
+  0% {
+    transform: translateY(100px) rotate(0deg);
+    opacity: 0.5;
+    -webkit-transform: translateY(100px) rotate(0deg);
+    -moz-transform: translateY(100px) rotate(0deg);
+    -ms-transform: translateY(100px) rotate(0deg);
+    -o-transform: translateY(100px) rotate(0deg);
+}
+
+
+  100% {
+    transform: scale(4) translateY(-900px) rotate(-260deg);
+    opacity: 0.5;
+    border-radius: 50%;
+    -webkit-transform: scale(4) translateY(-900px) rotate(-260deg);
+    -moz-transform: scale(4) translateY(-900px) rotate(-260deg);
+    -ms-transform: scale(4) translateY(-900px) rotate(-260deg);
+    -o-transform: scale(4) translateY(-900px) rotate(-260deg);
+    -webkit-border-radius: 30%;
+    -moz-border-radius: 30%;
+    -ms-border-radius: 30%;
+    -o-border-radius: 30%;
+}
+}
+
+/* Estilos de administrador */
+
+a {
+  background-color: var(--fondo--botones)!important;
+
 }

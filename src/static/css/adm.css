@@ -1,0 +1,75 @@
+@import url('./vars.css');
+
+body, html {
+    background: var(--fondo--primario);
+    height: 100vh;
+}
+
+.bodyadm {
+    margin: 0 40px;
+    background: var(--fondo--secundario);
+
+}
+
+.contPrint {
+    background: var(--fondo--secundario);
+    padding-top: 20px;
+}
+
+.navbar {
+    background: transparent;
+    border-bottom: 1px solid #c9c9c9;
+}
+
+.nav-link, .nav-item, .nav-tabs {
+    border: none !important;
+    margin: 0 8px 0 0 !important;
+    background: transparent;
+    color: #2b2b2b !important;
+}
+
+.card-body {
+    background: #3a4c3d !important;
+}
+
+.table-striped {
+    border-radius: 12px !important;
+    -webkit-border-radius: 12px !important;
+    -moz-border-radius: 12px !important;
+    -ms-border-radius: 12px !important;
+    -o-border-radius: 12px !important;
+}
+
+th {
+    background: #516754 !important;
+}
+
+td {
+    background: #ffffff !important;
+    color: #2b2b2b !important;
+}
+
+a {
+    border-color: #6f8879 !important;
+    background-color: #dcffde !important;
+}
+
+h2 {
+    text-align: center;
+}
+
+input, select {
+    background: #ffffff !important;
+    color: #2b2b2b !important;
+    margin: 4px 0px !important;
+}
+
+input::placeholder {
+    color: #000000 !important;
+}
+
+.btnRegistro {
+    background: #296218 !important;
+    border: none !important;
+    color: #ffffff !important;
+}
