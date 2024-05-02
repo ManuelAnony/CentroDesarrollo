@@ -15,6 +15,7 @@
     
         <div class="d-flex justify-content-between mb-3 navbar">
             <h1>Service Manager</h1>
+            <br>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" id="tabProyectos" data-toggle="tab" href="#proyectos" role="tab" aria-controls="proyectos" aria-selected="true">Proyectos</a>
@@ -29,8 +30,10 @@
                     <a class="nav-link" id="tabRegistrarDesarrollador" data-toggle="tab" href="#registrarDesarrollador" role="tab" aria-controls="registrarDesarrollador" aria-selected="false">Registrar Desarrollador</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="tabSeguridad" data-toggle="tab" href="#seguridad" role="tab" aria-controls="#seguridad" aria-selected="false">Seguridad</a>
+                    <a class="nav-link" id="tabseguridad" data-toggle="tab" href="#seguridad" role="tab" aria-controls="#seguridad" aria-selected="false">seguridad</a>                
                 </li>
+                
+                
             </ul>
     
             <div>
@@ -120,45 +123,45 @@
                 </div>
             </div>
           
-            <!-- Contenido de Vista de Solicitudes -->
-        <div id="solicitudes" class="tab-pane fade" role="tabpanel" aria-labelledby="tabSolicitudes">
-            <div class="container pt-5">
-                <div class="card card-body">
-                    <h2>Solicitudes</h2>
-                    <!-- Tabla para mostrar las solicitudes -->
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Nombre de la Solicitud</th>
-                                <th>Descripción</th>
-                                <th>Fecha</th>
-                                <!--<th>Porcentaje Completado</th>-->
-                                <th>Empresa</th> <!-- Agregar columna para el nombre de la empresa -->
-                                <td>Opciones</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if solicitudes %}
-                                {% for solicitud in solicitudes %}
-                                    <tr>
-                                        <td>{{ solicitud['nombre_solicitud'] }}</td>
-                                        <td>{{ solicitud['descripcion_solicitud'] }}</td>
-                                        <td>{{ solicitud['fecha'] }}</td>
-                                        <!--<td>{{ solicitud['porcentaje_solicitud'] }}%</td>-->
-                                        <td>{{ solicitud['email'] }}</td> <!-- Mostrar el nombre de la empresa -->
-                                        <td>Ver solicitud</td>
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
+                <!-- Contenido de Vista de Solicitudes -->
+            <div id="solicitudes" class="tab-pane fade" role="tabpanel" aria-labelledby="tabSolicitudes">
+                <div class="container pt-5">
+                    <div class="card card-body">
+                        <h2>Solicitudes</h2>
+                        <!-- Tabla para mostrar las solicitudes -->
+                        <table class="table table-striped">
+                            <thead>
                                 <tr>
-                                    <td colspan="5">No hay solicitudes disponibles.</td> <!-- Ajustar el colspan según el número de columnas -->
+                                    <th>Nombre de la Solicitud</th>
+                                    <th>Descripción</th>
+                                    <th>Fecha</th>
+                                    <!--<th>Porcentaje Completado</th>-->
+                                    <th>Empresa</th> <!-- Agregar columna para el nombre de la empresa -->
+                                    <td>Opciones</td>
                                 </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {% if solicitudes %}
+                                    {% for solicitud in solicitudes %}
+                                        <tr>
+                                            <td>{{ solicitud['nombre_solicitud'] }}</td>
+                                            <td>{{ solicitud['descripcion_solicitud'] }}</td>
+                                            <td>{{ solicitud['fecha'] }}</td>
+                                            <!--<td>{{ solicitud['porcentaje_solicitud'] }}%</td>-->
+                                            <td>{{ solicitud['email'] }}</td> <!-- Mostrar el nombre de la empresa -->
+                                            <td>Ver solicitud</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5">No hay solicitudes disponibles.</td> <!-- Ajustar el colspan según el número de columnas -->
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
         
             <!-- Contenido de Empresas -->
             <div id="empresas" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab">
@@ -311,101 +314,98 @@
                         </div>
                     </div>
                         <div class="col-md-8">
-                        <div class="card card-body">
-                            <h2>Usuarios Registrados</h2>    
-                      <select id="seleccionarInfo">
-                        <option value="">Selecciona...</option>
-                        <option value="infoDesarrolladores">Desarrolladores</option>
-                        <option value="infoAdministradores">Administradores</option>
-                    </select>
-                    <div id="infoDesarrolladores" style="display: none;">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Nombre del Desarrollador</th>
-                                    <th>Email</th>
-                                    <th>Rol</th>
-                                    <th>Opciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for usuario in desarrolladores %}
-                                    <tr>
-                                        <td>{{ usuario.nombreDesarrollador }}</td>
-                                        <td>{{ usuario.email }}</td>
-                                        <td>{{ usuario.rol }}</td>
-                                        <td>Eliminar</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="infoAdministradores" style="display: none;">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Nombre del Administrador</th>
-                                    <th>Email</th>
-                                    <th>Rol</th>
-                                    <th>Opciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for usuario in usuarios_admin %}
-                                    <tr>
-                                        <td>{{ usuario.nombreDesarrollador }}</td>
-                                        <td>{{ usuario.email }}</td>
-                                        <td>{{ usuario.rol }}</td>
-                                        <td>Eliminar</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                            <div class="card card-body">
+                                <h2>Usuarios Registrados</h2>    
+                                <select id="seleccionarInfo">
+                                    <option value="">Selecciona...</option>
+                                    <option value="infoDesarrolladores">Desarrolladores</option>
+                                    <option value="infoAdministradores">Administradores</option>
+                                </select>
+                                <div id="infoDesarrolladores" style="display: none;">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre del Desarrollador</th>
+                                                <th>Email</th>
+                                                <th>Rol</th>
+                                                <th>Opciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for usuario in desarrolladores %}
+                                                <tr>
+                                                    <td>{{ usuario.nombreDesarrollador }}</td>
+                                                    <td>{{ usuario.email }}</td>
+                                                    <td>{{ usuario.rol }}</td>
+                                                    <td>Eliminar</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="infoAdministradores" style="display: none;">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre del Administrador</th>
+                                                <th>Email</th>
+                                                <th>Rol</th>
+                                                <th>Opciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for usuario in usuarios_admin %}
+                                                <tr>
+                                                    <td>{{ usuario.nombreDesarrollador }}</td>
+                                                    <td>{{ usuario.email }}</td>
+                                                    <td>{{ usuario.rol }}</td>
+                                                    <td>Eliminar</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                 </div>
-                    </div>
-                </div>
             </div>
-            </div>
-            </div>
-
+           
+            
+            <!-- Contenido de seguridad -->
             <div id="seguridad" class="tab-pane fade"  role="tabpanel" aria-labelledby="seguridad-tab">
                 <div class="container pt-5">
-                    <div class="row">
+                    <div class="card card-body">
                         <h2>Centro de Seguridad</h2>
-                            <p>Bienvenido al Centro de Seguridad del Centro Digital de Desarrollo Tecnológico (CDDT)!</p>
-                            <p>En esta sección, encontrarás información importante sobre ciberseguridad y recomendaciones para garantizar una experiencia segura al utilizar nuestra plataforma.</p>
-                            
-                            <h3>Nuestro Compromiso con la Seguridad</h3>
-                            <p>En el CDDT, la seguridad de nuestros usuarios es nuestra máxima prioridad. Nos esforzamos por implementar las mejores prácticas de seguridad y mantenernos actualizados sobre las últimas amenazas cibernéticas para proteger la información de nuestros usuarios.</p>
-                            
-                            <h3>Recomendaciones para Usuarios</h3>
-                            <ol>
-                                <li><strong>Contraseñas Seguras:</strong> Utiliza contraseñas fuertes y únicas para tu cuenta en el CDDT.</li>
-                                <li><strong>Autenticación de Dos Factores (2FA):</strong> Considera habilitar la autenticación de dos factores para una capa adicional de seguridad.</li>
-                                <li><strong>Actualizaciones de Software:</strong> Mantén actualizados tus dispositivos y aplicaciones.</li>
-                                <li><strong>Concientización sobre Phishing:</strong> Mantente alerta ante correos electrónicos sospechosos.</li>
-                            </ol>
-                            
-                            <h3>Recomendaciones para Administradores</h3>
-                            <ol>
-                                <li><strong>Gestión de Acceso:</strong> Implementa políticas de acceso sólidas y revisa regularmente los permisos de usuario.</li>
-                                <li><strong>Monitoreo de Actividades:</strong> Establece sistemas de monitoreo para detectar actividades sospechosas.</li>
-                                <li><strong>Respaldo de Datos:</strong> Realiza copias de seguridad regulares de los datos almacenados.</li>
-                            </ol>
-                            
-                            <h3>Reporte de Problemas de Seguridad</h3>
-                            <p>Si descubres alguna vulnerabilidad de seguridad o sospechas de actividades maliciosas en la plataforma, por favor reporta el problema de inmediato a nuestro equipo de seguridad.</p>
-                            
-                            <p>Gracias por tu compromiso con la seguridad en el Centro Digital de Desarrollo Tecnológico.</p>
-                        </div>
+                        <p>Bienvenido al Centro de Seguridad del Centro Digital de Desarrollo Tecnológico (CDDT)!</p>
+                        <p>En esta sección, encontrarás información importante sobre ciberseguridad y recomendaciones para garantizar una experiencia segura al utilizar nuestra plataforma.</p>
+                        
+                        <h3>Nuestro Compromiso con la Seguridad</h3>
+                        <p>En el CDDT, la seguridad de nuestros usuarios es nuestra máxima prioridad. Nos esforzamos por implementar las mejores prácticas de seguridad y mantenernos actualizados sobre las últimas amenazas cibernéticas para proteger la información de nuestros usuarios.</p>
+                        
+                        <h3>Recomendaciones para Usuarios</h3>
+                        <ol>
+                            <li><strong>Contraseñas Seguras:</strong> Utiliza contraseñas fuertes y únicas para tu cuenta en el CDDT.</li>
+                            <li><strong>Autenticación de Dos Factores (2FA):</strong> Considera habilitar la autenticación de dos factores para una capa adicional de seguridad.</li>
+                            <li><strong>Actualizaciones de Software:</strong> Mantén actualizados tus dispositivos y aplicaciones.</li>
+                            <li><strong>Concientización sobre Phishing:</strong> Mantente alerta ante correos electrónicos sospechosos.</li>
+                        </ol>
+                        
+                        <h3>Recomendaciones para Administradores</h3>
+                        <ol>
+                            <li><strong>Gestión de Acceso:</strong> Implementa políticas de acceso sólidas y revisa regularmente los permisos de usuario.</li>
+                            <li><strong>Monitoreo de Actividades:</strong> Establece sistemas de monitoreo para detectar actividades sospechosas.</li>
+                            <li><strong>Respaldo de Datos:</strong> Realiza copias de seguridad regulares de los datos almacenados.</li>
+                        </ol>
+                        
+                        <h3>Reporte de Problemas de Seguridad</h3>
+                        <p>Si descubres alguna vulnerabilidad de seguridad o sospechas de actividades maliciosas en la plataforma, por favor reporta el problema de inmediato a nuestro equipo de seguridad.</p>
+                        
+                        <p>Gracias por tu compromiso con la seguridad en el Centro Digital de Desarrollo Tecnológico.</p>  
                     </div>
                 </div>
-                </div>
-                </div>
             </div>
-            </div>
-            </div>
+               
+            
             
         </div>
     

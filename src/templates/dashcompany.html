@@ -48,7 +48,7 @@
                                     <th>Nombre de la Solicitud</th>
                                     <th>Descripción</th>
                                     <th>Fecha</th>
-                                    <th>Porcentaje Completado</th>
+                                    <th>Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -58,7 +58,7 @@
                                             <td>{{ solicitud['nombre_solicitud'] }}</td>
                                             <td>{{ solicitud['descripcion_solicitud'] }}</td>
                                             <td>{{ solicitud['fecha'] }}</td>
-                                            <td>{{ solicitud['porcentaje_solicitud'] }}%</td>
+                                            <td>{{ solicitud['estado'] }}</td>
                                         </tr>
                                     {% endfor %}
                                 {% else %}

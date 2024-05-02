@@ -228,7 +228,7 @@ def enviar_solicitud():
                 "nombre_solicitud": nombre_solicitud,
                 "descripcion_solicitud": descripcion_solicitud,
                 "fecha": fecha_solicitud,
-                "porcentaje_solicitud": 0,
+                "estado": "Pendiente",
                 "email": session['email']  # Añadir el email de la empresa
             }
 
