@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from config import *
 import re 
-from dotenv import load_dotenv
+
 import smtplib
 import random
 from email.mime.multipart import MIMEMultipart
