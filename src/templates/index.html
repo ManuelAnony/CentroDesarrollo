@@ -111,7 +111,7 @@
                                             <td>{{ proyecto.estado }}</td>
                                             <td>
                                                 <a href="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-primary btn-sm">Asignar Equipo</a>
-                                                <!-- <a href="{{ url_for('notificar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-success btn-sm">Notificar Equipo</a> -->
+                                                <a href="#" class="btn btn-primary btn-sm" onclick="confirmarEliminarProyecto('{{ proyecto._id }}')">Eliminar</a>
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -149,7 +149,11 @@
                                             <td>{{ solicitud['fecha'] }}</td>
                                             <!--<td>{{ solicitud['porcentaje_solicitud'] }}%</td>-->
                                             <td>{{ solicitud['email'] }}</td> <!-- Mostrar el nombre de la empresa -->
-                                            <td>Ver solicitud</td>
+                                            <td>
+                                               
+                                                <a href="#" class="btn btn-primary btn-sm" onclick="confirmarEliminarSolitud('{{ solicitud._id }}')">Eliminar</a>
+                                            </td>
+                                            
                                         </tr>
                                     {% endfor %}
                                 {% else %}
@@ -185,7 +189,11 @@
                                     <td>{{ usuario.nit }}</td>
                                     <td>{{ usuario.administrador }}</td>
                                     <td>{{ usuario.email }}</td>
-                                    <td>Eliminar</td>
+                                    <td>
+                                                                               
+                                        <a href="#" class="btn btn-primary btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
+
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -337,7 +345,9 @@
                                                     <td>{{ usuario.nombreDesarrollador }}</td>
                                                     <td>{{ usuario.email }}</td>
                                                     <td>{{ usuario.rol }}</td>
-                                                    <td>Eliminar</td>
+                                                    <td>
+                                                        <a href="#" class="btn btn-primary btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
+                                                    </td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -359,7 +369,9 @@
                                                     <td>{{ usuario.nombreDesarrollador }}</td>
                                                     <td>{{ usuario.email }}</td>
                                                     <td>{{ usuario.rol }}</td>
-                                                    <td>Eliminar</td>
+                                                    <td>
+                                                        <button class="btn btn-danger btn-sm" onclick="eliminarUsuario('{{ usuario.id }}')">Eliminar</button>
+                                                    </td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -416,6 +428,31 @@
 
   <!-- Inicializar las pestañas -->
   <script>
+    function confirmarEliminarUsuario(usuarioId) {
+        if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+            window.location.href = "{{ url_for('eliminar_usuario', usuario_id='') }}" + usuarioId;
+            
+        }
+    }
+    function confirmarEliminarSolitud(solicitudId) {
+        if (confirm('¿Estás seguro de que deseas eliminar esta solicitud?')) {
+            window.location.href = "{{ url_for('eliminar_solicitud', solicitud_id='') }}" + solicitudId;
+            
+        }
+    }
+    function confirmarEliminarProyecto(proyectoId) {
+        if (confirm('¿Estás seguro de que deseas eliminar este proyecto?')) {
+            window.location.href = "{{ url_for('eliminar_proyecto', proyecto_id='') }}" + proyectoId;
+            
+        }
+    }
+</script>
+
+
+
+  <script>
+    
+
     $(document).ready(function () {
       $('#myTab a').on('shown.bs.tab', function (e) {
         var target = $(e.target).attr('href')

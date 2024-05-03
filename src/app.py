@@ -1,14 +1,132 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, after_this_request
+from flask import Flask, render_template, request, redirect, url_for, flash, session, after_this_request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from config import *
 import re 
+import smtplib
+import random
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'
-
 # Instancia de conexión a la base de datos
 con_bd = Conexion()
+
+
+# Esta función generará un código de verificación de 6 dígitos
+def generate_verification_code():
+    return ''.join(str(random.randint(0, 9)) for _ in range(6))
+
+# Esta función enviará el correo electrónico con el código de verificación
+def send_verification_email(to_email, verification_code):
+    # Configuración del servidor SMTP
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = "cddta3211@gmail.com"
+    sender_password = "ypix xxef wbmi zqxl"  # Asegúrate de que esta sea la clave de la aplicación correcta
+
+    # Crear el mensaje
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg['Subject'] = "Código de verificación"
+
+    # Cuerpo del mensaje
+    body = f"Tu código de verificación es: {verification_code}"
+    msg.attach(MIMEText(body, 'plain'))
+
+    # Conexión al servidor SMTP
+    server = smtplib.SMTP(smtp_server, smtp_port)
+    server.starttls()
+    server.login(sender_email, sender_password)
+
+    # Envío del mensaje
+    server.send_message(msg)
+
+    # Cerrar la conexión
+    server.quit()
+
+@app.route('/enviar_codigo_verificacion', methods=['POST'])
+def enviar_codigo_verificacion():
+    # Aquí generas el código de verificación
+    verification_code = generate_verification_code()
+    
+    # Aquí obtienes el correo electrónico del usuario desde el formulario
+    to_email = request.form.get('email')
+
+    # Guarda el código de verificación en la sesión
+    session['verification_code'] = verification_code
+
+    # Aquí envías el correo electrónico con el código de verificación
+    send_verification_email(to_email, verification_code)
+
+    # Redirige al usuario a la página de verificación
+    return redirect(url_for('verificacionEmpresa'))
+@app.route('/validar_codigo_verificacion', methods=['POST'])
+def validar_codigo_verificacion():
+    if request.method == 'POST':
+        entered_code = request.form.get('verification_code')
+        verification_code = session.get('verification_code')
+
+        if entered_code == verification_code:
+            flash('Registro completado exitosamente', 'success')
+            session.pop('verification_code', None)
+            return redirect(url_for('login'))
+        else:
+            flash('Código de verificación incorrecto', 'danger')
+
+    return render_template('verificacion.html')
+
+
+@app.route('/eliminar_usuario/<usuario_id>')
+def eliminar_usuario(usuario_id):
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    
+    # Agrega la lógica para eliminar el proyecto en función de su ID
+    usuario = con_bd.usuarios.find_one({"_id": ObjectId(usuario_id)})
+
+    if usuario:
+        con_bd.usuarios.delete_one({"_id": ObjectId(usuario_id)})
+        flash('usuario eliminado con éxito', 'success')
+    else:
+        flash('Usuario no encontrado', 'danger')
+    
+    return redirect(url_for('index'))
+
+@app.route('/eliminar_solicitud/<solicitud_id>')
+def eliminar_solicitud(solicitud_id):
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    
+    # Agrega la lógica para eliminar el proyecto en función de su ID
+    solicitud = con_bd.solicitudes.find_one({"_id": ObjectId(solicitud_id)})
+
+    if solicitud:
+        con_bd.solicitudes.delete_one({"_id": ObjectId(solicitud_id)})
+        flash('Solicitud eliminado con éxito', 'success')
+    else:
+        flash('Solicitud no encontrado', 'danger')
+    
+    return redirect(url_for('index'))
+
+
+@app.route('/eliminar_proyecto/<proyecto_id>')
+def eliminar_proyecto(proyecto_id):
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    
+    # Agrega la lógica para eliminar el proyecto en función de su ID
+    proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+
+    if proyecto:
+        con_bd.proyectos.delete_one({"_id": ObjectId(proyecto_id)})
+        flash('Proyecto eliminado con éxito', 'success')
+    else:
+        flash('Proyecto no encontrado', 'danger')
+    
+    return redirect(url_for('index'))
 
 # Ruta para el inicio de sesión
 @app.route('/login', methods=['GET', 'POST'])
@@ -45,8 +163,12 @@ def login():
                 flash('Inicio de sesión exitoso como usuario', 'success')
                 return redirect(url_for('proyecto'))
             elif usuario.get("rol") == "Empresa":
-                flash('Inicio de sesión exitoso como usuario', 'success')
-                return redirect(url_for('dashcompany'))
+                if usuario.get("verificado"):  # Verifica si la cuenta está verificada
+                    session['email'] = usuario['email']
+                    flash('Inicio de sesión exitoso como empresa', 'success')
+                    return redirect(url_for('dashcompany'))
+                else:
+                    flash('La cuenta no está verificada.', 'danger')
         else:   
             flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
 
@@ -78,6 +200,7 @@ def validar_contraseña(password):
         return False
     return True
 
+# Página de registro de empresa
 @app.route('/registroEmpresa', methods=['GET', 'POST'])
 def registroEmpresa():
     if request.method == 'POST':
@@ -104,25 +227,49 @@ def registroEmpresa():
             flash("La contraseña debe contener al menos 8 caracteres, un número, una letra minúscula, una letra mayúscula y un carácter especial.")
             return redirect(url_for('registroEmpresa'))
 
-        existe_usuario = con_bd.usuarios.find_one({"email": email})
-
-        if existe_usuario:
-            flash("El usuario ya existe. Por favor, inicia sesión o utiliza otro correo electrónico.")
+        # Verificar si el correo electrónico ya está en uso
+        if con_bd.usuarios.find_one({"email": email}):
+            flash("El correo electrónico ya está en uso.")
             return redirect(url_for('registroEmpresa'))
-        else:
-            hashed_password = generate_password_hash(password)
-            nuevo_usuario = {
-                "nombreEmpresa": nombreEmpresa,
-                "nit": nit,
-                "administrador": administrador,
-                "email": email,
-                "password": hashed_password,
-                "rol": admin
-            }
-            con_bd.usuarios.insert_one(nuevo_usuario)
-            return redirect(url_for('dashcompany'))
+
+        # Generar código de verificación y enviar correo electrónico
+        verification_code = generate_verification_code()
+        session['verification_code'] = verification_code
+        send_verification_email(email, verification_code)
+
+        # Guardar los datos del usuario en la base de datos
+        hashed_password = generate_password_hash(password)
+        nuevo_usuario = {
+            "nombreEmpresa": nombreEmpresa,
+            "nit": nit,
+            "administrador": administrador,
+            "email": email,
+            "password": hashed_password,
+            "rol": admin
+        }
+        con_bd.usuarios.insert_one(nuevo_usuario)
+
+        flash("Se ha enviado un correo electrónico con el código de verificación. Por favor, ingrésalo para completar el registro.", "success")
+        return redirect(url_for('verificacionEmpresa'))
 
     return render_template('registro.html')
+
+# Página de verificación de registro de empresa
+@app.route('/verificacionEmpresa', methods=['GET', 'POST'])
+def verificacionEmpresa():
+    if request.method == 'POST':
+        entered_code = request.form.get('verification_code')
+        verification_code = session.get('verification_code')
+
+        if entered_code == verification_code:
+            flash('Registro completado exitosamente', 'success')
+            session.pop('verification_code', None)
+            return redirect(url_for('login'))
+        else:
+            flash('Código de verificación incorrecto', 'danger')
+
+    return render_template('verificacion.html')
+
 
 @app.route('/registroEquipo', methods=['GET', 'POST'])
 def registroEquipo():
@@ -419,21 +566,7 @@ def editar_estado(proyecto_id):
 
     return render_template('editar_estado.html', proyecto_id=proyecto_id, estado_actual=estado_actual)
 
-@app.route('/eliminar_proyecto/<proyecto_id>')
-def eliminar_proyecto(proyecto_id):
-    if 'email' not in session:
-        return redirect(url_for('login'))
-    
-    # Agrega la lógica para eliminar el proyecto en función de su ID
-    proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
 
-    if proyecto:
-        con_bd.proyectos.delete_one({"_id": ObjectId(proyecto_id)})
-        flash('Proyecto eliminado con éxito', 'success')
-    else:
-        flash('Proyecto no encontrado', 'danger')
-    
-    return redirect(url_for('index'))
     
 @app.route('/proyecto')
 def proyecto():
