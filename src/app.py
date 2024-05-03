@@ -166,13 +166,12 @@ def crear_app():
                     elif usuario.get("rol") == "Desarrollador":
                         flash('Inicio de sesión exitoso como usuario', 'success')
                         return redirect(url_for('proyecto'))
-                    elif usuario.get("rol") == "Empresa":
-                        if usuario.get("verificado"):  # Verifica si la cuenta está verificada
-                            session['email'] = usuario['email']
-                            flash('Inicio de sesión exitoso como empresa', 'success')
-                            return redirect(url_for('dashcompany'))
-                        else:
-                            flash('La cuenta no está verificada.', 'danger')
+                    elif usuario.get("rol") == "Empresa" and usuario.get("verificado"):
+                         # Verifica si la cuenta está verificada   
+                        flash('Inicio de sesión exitoso como empresa', 'success')
+                        return redirect(url_for('dashcompany'))
+                    else:
+                        flash('La cuenta no está verificada.', 'danger')
                 else:   
                     flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
 
