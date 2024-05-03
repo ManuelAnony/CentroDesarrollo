@@ -669,4 +669,4 @@ def notificar_equipo(proyecto_id):
 
 if __name__ == '__main__':
     CORS(app)
-    app.run(debug=True)
+    
