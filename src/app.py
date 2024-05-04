@@ -126,14 +126,7 @@ def crear_app():
             # Verificar si el usuario ya ha iniciado sesión
             if 'email' in session:
                 # Si el usuario ya ha iniciado sesión, redirigir a su página correspondiente según su rol
-                usuario = con_bd.usuarios.find_one({"email": session['email']})
-                if usuario:
-                    if usuario.get("rol") == "Administrador":
-                        return redirect(url_for('index'))
-                    elif usuario.get("rol") == "Desarrollador":
-                        return redirect(url_for('proyecto'))
-                    elif usuario.get("rol") == "Empresa":
-                        return redirect(url_for('dashcompany'))
+                return redirect(get_redirect_url())
 
             if request.method == 'POST':
                 email = request.form.get("email")
@@ -148,22 +141,31 @@ def crear_app():
                 
                 if usuario and check_password_hash(usuario["password"], password):
                     session['email'] = usuario['email']
-                    if usuario.get("rol") == "Administrador":
-                        flash('Inicio de sesión exitoso como administrador', 'success')
-                        return redirect(url_for('index'))
-                    elif usuario.get("rol") == "Desarrollador":
-                        flash('Inicio de sesión exitoso como usuario', 'success')
-                        return redirect(url_for('proyecto'))
-                    elif usuario.get("rol") == "Empresa" and usuario.get("verificado"):
-                         # Verifica si la cuenta está verificada   
-                        flash('Inicio de sesión exitoso como empresa', 'success')
-                        return redirect(url_for('dashcompany'))
-                    else:
-                        flash('La cuenta no está verificada.', 'danger')
-                else:   
-                    flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
+                    flash('Inicio de sesión exitoso', 'success')
+                    return redirect(get_redirect_url())
+
+                flash('Correo electrónico o contraseña incorrectos. Por favor, verifica tus credenciales.', 'danger')
 
             return render_template('login.html')
+
+        def get_redirect_url():
+            """
+            Obtiene la URL de redirección adecuada según el rol del usuario.
+            """
+            if 'next' in request.args:
+                return request.args.get('next')
+            else:
+                if 'email' not in session:
+                    return url_for('login')
+                usuario = con_bd.usuarios.find_one({"email": session['email']})
+                if usuario:
+                    if usuario.get("rol") == "Empresa" and usuario.get("verificado"):
+                        return url_for('dashcompany')
+                    elif usuario.get("rol") == "Desarrollador":
+                        return url_for('proyecto')
+                    elif usuario.get("rol") == "Administrador":
+                        return url_for('index')
+            return url_for('login')
         @app.after_request
         def add_header(response):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
