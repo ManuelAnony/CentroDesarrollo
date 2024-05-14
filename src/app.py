@@ -34,11 +34,17 @@ def crear_app():
             # Decorador para requerir inicio de sesión
             def login_required(func):
                 def wrapper(*args, **kwargs):
-                    allowed_paths = ['/login', '/registroempresa', '/verificacion']
+                    allowed_paths = ['/login', '/registroempresa', '/verificacionEmpresa']
                     if 'email' not in session and request.path not in allowed_paths:
                         return redirect(url_for('login'))
                     elif 'email' not in session and request.path == '/' and request.method == 'GET':
                         return redirect(url_for('login'))
+                    elif 'email' in session:
+                        usuario = con_bd.usuarios.find_one({"email": session['email']})
+                        if not usuario:
+                            return redirect(url_for('login'))
+                        elif not usuario.get("verificado") and request.path != '/verificacionEmpresa':
+                            return redirect(url_for('verificacionEmpresa'))
                     return func(*args, **kwargs)
                 return wrapper
             
