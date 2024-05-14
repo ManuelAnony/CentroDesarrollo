@@ -493,6 +493,7 @@ def crear_app():
                 return redirect(url_for('login'))
             # Ruta para la página de inicio (requiere inicio de sesión)
             @app.route('/')
+            @login_required
             def index():
                 
                 if 'email' not in session:
