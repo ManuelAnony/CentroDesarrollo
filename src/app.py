@@ -44,7 +44,7 @@ def crear_app():
                         if not usuario:
                             return redirect(url_for('login'))
                         elif not usuario.get("verificado") and request.path != '/verificacionEmpresa':
-                            return redirect(url_for('verificacionEmpresa'))
+                            return redirect(url_for('login'))
                     return func(*args, **kwargs)
                 return wrapper
             
