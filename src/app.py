@@ -11,11 +11,35 @@ from email.mime.text import MIMEText
 
 def crear_app():  
             app = Flask(__name__, static_folder='static')
+            # Configurar encabezados HTTP para protección contra ataques XSS
+            # Establecer la directiva X-Frame-Options en DENY
+            app.config['X_FRAME_OPTIONS'] = 'DENY'
             app.secret_key = 'u26kWaqy5XWNmdPS2%h%Lvf^uuBh47'
             # Instancia de conexión a la base de datos
             con_bd = Conexion()
+            
+            # Función para validar la URL y prevenir SSRF
+            def validate_url(url):
+                parsed_url = urlparse(url)
+                if parsed_url.scheme not in ('http', 'https'):
+                    return False  # Solo se permiten URLs HTTP/HTTPS
+                
+                # Validar si el dominio está en la lista de dominios permitidos
+                if parsed_url.hostname not in allowed_domains:
+                    return False  # Dominio no autorizado
+                
+                return True
+            allowed_domains = ['centrodesarrollo.onrender.com', '127.0.0.1']
 
-
+            # Decorador para requerir inicio de sesión
+            def login_required(func):
+                def wrapper(*args, **kwargs):
+                    allowed_paths = ['/login', '/registroempresa', '/verificacion']
+                    if 'email' not in session and request.path not in allowed_paths:
+                        return redirect(url_for('login'))
+                    return func(*args, **kwargs)
+                return wrapper
+            
             # Esta función generará un código de verificación de 6 dígitos
             def generate_verification_code():
                 return ''.join(str(random.randint(0, 9)) for _ in range(6))
