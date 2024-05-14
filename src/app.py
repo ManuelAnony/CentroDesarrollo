@@ -37,6 +37,8 @@ def crear_app():
                     allowed_paths = ['/login', '/registroempresa', '/verificacion']
                     if 'email' not in session and request.path not in allowed_paths:
                         return redirect(url_for('login'))
+                    elif 'email' not in session and request.path == '/' and request.method == 'GET':
+                        return redirect(url_for('login'))
                     return func(*args, **kwargs)
                 return wrapper
             
