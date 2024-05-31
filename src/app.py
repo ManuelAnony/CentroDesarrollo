@@ -2,52 +2,20 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from config import *
-from urllib.parse import urlparse
 import re 
 import smtplib
 import random
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
 def crear_app():  
             app = Flask(__name__, static_folder='static')
-            # Configurar encabezados HTTP para protección contra ataques XSS
-            # Establecer la directiva X-Frame-Options en DENY
-            app.config['X_FRAME_OPTIONS'] = 'DENY'
-            app.secret_key = 'u26kWaqy5XWNmdPS2%h%Lvf^uuBh47'
+            app.secret_key = 'your_secret_key'
             # Instancia de conexión a la base de datos
             con_bd = Conexion()
-            
-            # Función para validar la URL y prevenir SSRF
-            def validate_url(url):
-                parsed_url = urlparse(url)
-                if parsed_url.scheme not in ('http', 'https'):
-                    return False  # Solo se permiten URLs HTTP/HTTPS
-                
-                # Validar si el dominio está en la lista de dominios permitidos
-                if parsed_url.hostname not in allowed_domains:
-                    return False  # Dominio no autorizado
-                
-                return True
-            allowed_domains = ['centrodesarrollo.onrender.com', '127.0.0.1']
 
-            # Decorador para requerir inicio de sesión
-            def login_required(func):
-                def wrapper(*args, **kwargs):
-                    allowed_paths = ['/login', '/registroempresa', '/verificacionEmpresa']
-                    if 'email' not in session and request.path not in allowed_paths:
-                        return redirect(url_for('login'))
-                    elif 'email' not in session and request.path == '/' and request.method == 'GET':
-                        return redirect(url_for('login'))
-                    elif 'email' in session:
-                        usuario = con_bd.usuarios.find_one({"email": session['email']})
-                        if not usuario:
-                            return redirect(url_for('login'))
-                        elif not usuario.get("verificado") and request.path != '/verificacionEmpresa':
-                            return redirect(url_for('login'))
-                    return func(*args, **kwargs)
-                return wrapper
-            
+
             # Esta función generará un código de verificación de 6 dígitos
             def generate_verification_code():
                 return ''.join(str(random.randint(0, 9)) for _ in range(6))
@@ -80,6 +48,7 @@ def crear_app():
 
                 # Cerrar la conexión
                 server.quit()
+
             @app.route('/enviar_codigo_verificacion', methods=['POST'])
             def enviar_codigo_verificacion():
                 # Aquí generas el código de verificación
@@ -114,6 +83,8 @@ def crear_app():
                         return redirect(url_for('verificacionEmpresa'))  # Redirigir de nuevo a la página de verificación si el código es incorrecto
 
                 return render_template('verificar.html')
+
+
             @app.route('/eliminar_usuario/<usuario_id>')
             def eliminar_usuario(usuario_id):
                 if 'email' not in session:
@@ -129,6 +100,7 @@ def crear_app():
                     flash('Usuario no encontrado', 'danger')
                 
                 return redirect(url_for('index'))
+
             @app.route('/eliminar_solicitud/<solicitud_id>')
             def eliminar_solicitud(solicitud_id):
                 if 'email' not in session:
@@ -144,6 +116,8 @@ def crear_app():
                     flash('Solicitud no encontrado', 'danger')
                 
                 return redirect(url_for('index'))
+
+
             @app.route('/eliminar_proyecto/<proyecto_id>')
             def eliminar_proyecto(proyecto_id):
                 if 'email' not in session:
@@ -159,6 +133,7 @@ def crear_app():
                     flash('Proyecto no encontrado', 'danger')
                 
                 return redirect(url_for('index'))
+
             # Ruta para el inicio de sesión
             @app.route('/login', methods=['GET', 'POST'])
             def login():
@@ -208,12 +183,15 @@ def crear_app():
                         flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
 
                 return render_template('login.html')
+
+
             @app.after_request
             def add_header(response):
                 response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
                 response.headers["Pragma"] = "no-cache"
                 response.headers["Expires"] = "0"
                 return response
+
             # Función para validar la complejidad de la contraseña
             def validar_contraseña(password):
                 # Al menos 8 caracteres
@@ -232,8 +210,7 @@ def crear_app():
                 if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
                     return False
                 return True
-         
-            
+
             # Página de registro de empresa
             @app.route('/registroEmpresa', methods=['GET', 'POST'])
             def registroEmpresa():
@@ -287,6 +264,7 @@ def crear_app():
                     return redirect(url_for('verificacionEmpresa'))
 
                 return render_template('registro.html')
+
             # Página de verificación de registro de empresa
             @app.route('/verificacionEmpresa', methods=['GET', 'POST'])
             def verificacionEmpresa():
@@ -302,6 +280,8 @@ def crear_app():
                         flash('Código de verificación incorrecto', 'danger')
 
                 return render_template('verificacion.html')
+
+
             @app.route('/registroEquipo', methods=['GET', 'POST'])
             def registroEquipo():
                 if request.method == 'POST':
@@ -353,6 +333,7 @@ def crear_app():
                         return redirect(url_for('index'))  
 
                 return render_template('index.html')
+
             def obtener_datos_empresa(email):
                 try:
                     empresa = con_bd.usuarios.find_one({"email": email, "rol": "Empresa"},
@@ -386,6 +367,8 @@ def crear_app():
                     return render_template('dashcompany.html', nombre_empresa=nombre_empresa, nit=nit, administrador=administrador, email_empresa=email_empresa, rol=rol, solicitudes=solicitudes)
                 else:
                     return "Error al obtener los datos de la empresa"
+
+
             @app.route('/enviar_solicitud', methods=['POST'])
             def enviar_solicitud():
                 try:
@@ -423,6 +406,7 @@ def crear_app():
                     print(f"Error al procesar la solicitud: {e}")
                     flash('Error al enviar la solicitud', 'danger')
                     return redirect(url_for('dashcompany'))
+
             def obtener_solicitudes(email):
                 try:
                     # Obtén las solicitudes para la empresa específica desde la base de datos
@@ -431,6 +415,7 @@ def crear_app():
                 except Exception as e:
                     print(f"Error al obtener las solicitudes: {e}")
                     return []
+
             @app.route('/empresas')
             def ver_empresas():
                 if 'email' not in session:
@@ -451,6 +436,8 @@ def crear_app():
                     return render_template('dashboard.html', nombre_empresa=nombre_empresa, nit=nit, administrador=administrador, email_empresa=email_empresa)
                 else:
                     return "Error al obtener los datos de la empresa"
+
+
             def obtener_solicitudes_empresa():
                 try:
                     solicitudes = con_bd.solicitudes.find()
@@ -458,6 +445,7 @@ def crear_app():
                 except Exception as e:
                     print(f"Error al obtener las solicitudes: {e}")
                     return []
+
             @app.route('/solicitudes')
             def ver_solicitudes():
                 if 'email' not in session:
@@ -469,6 +457,7 @@ def crear_app():
                 solicitudes = obtener_solicitudes_empresa(email_empresa)
 
                 return render_template('dashboard.html', solicitudes=solicitudes, nombre_empresa=nombre_empresa, nit=nit, administrador=administrador, email_empresa=email_empresa)
+
             def obtener_usuarios_empresa():
                 try:
                     usuarios_empresa = con_bd.usuarios.find({"rol": "Empresa"})
@@ -489,7 +478,8 @@ def crear_app():
                     return list(usuarios_admin)
                 except Exception as e:
                     print(f"Error al obtener los usuarios de empresa: {e}")
-                    return []                
+                    return []  
+                
             # Ruta para cerrar sesión
             @app.route('/logout')
             def logout():
@@ -497,9 +487,9 @@ def crear_app():
                 session.pop('email', None)
                 flash('Sesión cerrada', 'info')
                 return redirect(url_for('login'))
+
             # Ruta para la página de inicio (requiere inicio de sesión)
             @app.route('/')
-            @login_required
             def index():
                 
                 if 'email' not in session:
@@ -520,6 +510,7 @@ def crear_app():
                 # Obtener proyectos en curso desde la base de datos
                 proyectos = con_bd.proyectos.find()
                 return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin )
+
             @app.route('/registrar_proyecto', methods=['POST'])
             def registrar_proyecto():
                 if 'email' not in session:
@@ -565,7 +556,8 @@ def crear_app():
                     con_bd.actividades.insert_one(nueva_actividad)
 
                     flash('Actividad creada con éxito', 'success')
-                    return redirect(url_for('proyecto'))                
+                    return redirect(url_for('proyecto'))
+                
             @app.route('/editar_estado/<proyecto_id>', methods=['GET', 'POST'])
             def editar_estado(proyecto_id):
                 if request.method == 'POST':
@@ -584,7 +576,9 @@ def crear_app():
                 estado_actual = proyecto.get("estado")
 
                 return render_template('editar_estado.html', proyecto_id=proyecto_id, estado_actual=estado_actual)
-              
+
+
+                
             @app.route('/proyecto')
             def proyecto():
                 if 'email' not in session:
@@ -603,6 +597,8 @@ def crear_app():
                     actividades_por_proyecto[proyecto['_id']] = actividades
 
                 return render_template('proyecto.html', proyectos=proyectos, actividades_por_proyecto=actividades_por_proyecto)
+
+
             # Ruta para el formulario de asignar equipo
             @app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
             def asignar_equipo(proyecto_id):
@@ -633,6 +629,7 @@ def crear_app():
                 usuarios = list(usuarios_cursor)
 
                 return render_template('asignar_equipo.html', proyecto_id=proyecto_id, usuarios=usuarios)
+
             @app.route('/notificar_equipo/<proyecto_id>', methods=['GET', 'POST'])
             def notificar_equipo(proyecto_id):
                 if 'email' not in session:
@@ -652,26 +649,35 @@ def crear_app():
                 # equipo = con_bd.equipos.find({"proyecto_id": proyecto_id})
 
                 return render_template('notificar_equipo.html', proyecto_id=proyecto_id)
+
+
             @app.route('/asignar_equipo', methods=['GET'])
             def mostrar_formulario_asignar_equipo():
                 # Obtén la lista de usuarios con el rol "Desarrollador" desde tu base de datos
                 usuarios_desarrolladores = con_bd.usuarios.find({"rol": "Desarrollador"})
 
                 return render_template('asignar_equipo.html', usuarios=usuarios_desarrolladores)
+
             def notificar_equipo(proyecto_id):
                 if 'email' not in session:
                     return redirect(url_for('login'))
+
                 if request.method == 'POST':
                     # Obtén los datos del formulario
                     equipo_id = request.form.get('equipo_id')
                     mensaje = request.form.get('mensaje')
+
                     # Realiza la lógica para notificar al equipo, por ejemplo, enviar correos o notificaciones
+
                     flash(f'Notificación enviada al equipo {equipo_id} del proyecto {proyecto_id}', 'success')
+
                 # Puedes obtener más información sobre el proyecto, como el equipo asignado, a través de la base de datos aquí
                 # proyecto = con_bd.proyectos.find_one({"_id": proyecto_id})
                 # equipo = con_bd.equipos.find({"proyecto_id": proyecto_id})
+
                 return render_template('notificar_equipo.html', proyecto_id=proyecto_id)
             return app
+
 if __name__ == '__main__':
     app = crear_app()
     app.run(debug=True)
