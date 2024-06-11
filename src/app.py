@@ -43,6 +43,8 @@ def crear_app():
                         usuario = con_bd.usuarios.find_one({"email": session['email']})
                         if not usuario:
                             return redirect(url_for('login'))
+                        elif not usuario.get("verificado") and request.path != '/verificacionEmpresa':
+                            return redirect(url_for('verificacionEmpresa'))
                     return func(*args, **kwargs)
                 return wrapper
 
@@ -177,12 +179,8 @@ def crear_app():
                         elif usuario.get("rol") == "Desarrollador":
                             return redirect(url_for('proyecto'))
                         elif usuario.get("rol") == "Empresa":
-                            if usuario.get("verificado"):  
-                                flash('Inicio de sesión exitoso como empresa', 'success')
-                                return redirect(url_for('dashcompany'))
-                            else:
-                                flash('La cuenta no está verificada.', 'danger')
-                                return redirect(url_for('verificacionEmpresa'))  # Redirigir a la verificación si la cuenta no está verificada
+                            return redirect(url_for('dashcompany'))
+                           
 
                 if request.method == 'POST':
                     email = request.form.get("email")
@@ -204,12 +202,9 @@ def crear_app():
                             flash('Inicio de sesión exitoso como usuario', 'success')
                             return redirect(url_for('proyecto'))
                         elif usuario.get("rol") == "Empresa":
-                            if usuario.get("verificado"):  
-                                flash('Inicio de sesión exitoso como empresa', 'success')
-                                return redirect(url_for('dashcompany'))
-                            else:
-                                flash('La cuenta no está verificada.', 'danger')
-                                return redirect(url_for('verificacionEmpresa'))  # Redirigir a la verificación si la cuenta no está verificada
+                            flash('Inicio de sesión exitoso como empresa', 'success')
+                            return redirect(url_for('dashcompany'))
+                            
                     else:   
                         flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
 
