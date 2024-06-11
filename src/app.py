@@ -43,8 +43,6 @@ def crear_app():
                         usuario = con_bd.usuarios.find_one({"email": session['email']})
                         if not usuario:
                             return redirect(url_for('login'))
-                        elif not usuario.get("verificado") and request.path != '/verificacionEmpresa':
-                            return redirect(url_for('verificacionEmpresa'))
                     return func(*args, **kwargs)
                 return wrapper
 
