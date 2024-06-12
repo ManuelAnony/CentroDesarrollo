@@ -13,7 +13,6 @@ def crear_app():
     
     
         app = Flask(__name__, static_folder='static')
-        app.secret_key = 'your_secret_key'
         # Establecer la directiva X-Frame-Options en DENY
         app.config['X_FRAME_OPTIONS'] = 'DENY'
         app.secret_key = 'u26kWaqy5XWNmdPS2%h%Lvf^uuBh47'
@@ -33,25 +32,77 @@ def crear_app():
             return True
         allowed_domains = ['centrodesarrollo.onrender.com', '127.0.0.1']
 
-        def login_required(func):
-                def wrapper(*args, **kwargs):
-                    allowed_paths = ['/login', '/registroempresa', '/verificacionEmpresa']
-                    if 'email' not in session and request.path not in allowed_paths:
-                        return redirect(url_for('login'))
-                    elif 'email' not in session and request.path == '/' and request.method == 'GET':
-                        return redirect(url_for('login'))
-                    elif 'email' in session:
-                        usuario = con_bd.usuarios.find_one({"email": session['email']})
-                        if not usuario:
-                            return redirect(url_for('login'))
-                        elif not usuario.get("verificado") and request.path != '/verificacionEmpresa':
-                            return redirect(url_for('verificacionEmpresa'))
-                    return func(*args, **kwargs)
-                return wrapper
+        
         
         # Esta función generará un código de verificación de 6 dígitos
         def generate_verification_code():
             return ''.join(str(random.randint(0, 9)) for _ in range(6))
+        
+        ##Inicio Restablecer contraseña
+        # Función para enviar correo de restablecimiento de contraseña
+        def send_reset_email(to_email, reset_link):
+            smtp_server = "smtp.gmail.com"
+            smtp_port = 587
+            sender_email = "cddta3211@gmail.com"
+            sender_password = "ypix xxef wbmi zqxl"
+
+            msg = MIMEMultipart()
+            msg['From'] = sender_email
+            msg['To'] = to_email
+            msg['Subject'] = "Restablecer Contraseña"
+
+            body = f"Usa el siguiente enlace para restablecer tu contraseña: {reset_link}"
+            msg.attach(MIMEText(body, 'plain'))
+
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+            server.quit()
+
+        @app.route('/restablecer_contraseña', methods=['GET', 'POST'])
+        def restablecer_contraseña():
+            if request.method == 'POST':
+                email = request.form.get('email')
+                usuario = con_bd.usuarios.find_one({"email": email})
+                
+                if usuario:
+                    token = generate_verification_code()
+                    reset_link = url_for('resetear_con_token', token=token, _external=True)
+                    con_bd.tokens.insert_one({"email": email, "token": token})
+                    send_reset_email(email, reset_link)
+                    flash('Se ha enviado un enlace de restablecimiento a tu correo electrónico.', 'info')
+                else:
+                    flash('No se encontró una cuenta con ese correo electrónico.', 'danger')
+            
+            return render_template('restablecer_contraseña.html')
+
+        @app.route('/resetear_con_token/<token>', methods=['GET', 'POST'])
+        def resetear_con_token(token):
+            token_doc = con_bd.tokens.find_one({"token": token})
+            
+            if not token_doc:
+                flash('Token inválido o caducado.', 'danger')
+                return redirect(url_for('login'))
+            
+            if request.method == 'POST':
+                new_password = request.form.get('password')
+                confirm_password = request.form.get('confirmar_password')
+                
+                if new_password != confirm_password:
+                    flash('Las contraseñas no coinciden.', 'danger')
+                    return redirect(url_for('resetear_con_token', token=token))
+                
+                hashed_password = generate_password_hash(new_password)
+                con_bd.usuarios.update_one({"email": token_doc['email']}, {"$set": {"password": hashed_password}})
+                con_bd.tokens.delete_one({"token": token})
+                flash('Tu contraseña ha sido restablecida exitosamente.', 'success')
+                return redirect(url_for('login'))
+            
+            return render_template('resetear_con_token.html', token=token)
+        ##Fin Restablecer contraseña
+        
+        
 
         # Esta función enviará el correo electrónico con el código de verificación
         def send_verification_email(to_email, verification_code):
@@ -115,7 +166,6 @@ def crear_app():
 
 
         @app.route('/eliminar_usuario/<usuario_id>')
-        @login_required
         def eliminar_usuario(usuario_id):
             if 'email' not in session:
                 return redirect(url_for('login'))
@@ -149,7 +199,6 @@ def crear_app():
 
 
         @app.route('/eliminar_proyecto/<proyecto_id>')
-        @login_required
         def eliminar_proyecto(proyecto_id):
             if 'email' not in session:
                 return redirect(url_for('login'))
@@ -308,7 +357,6 @@ def crear_app():
 
 
         @app.route('/registroEquipo', methods=['GET', 'POST'])
-        @login_required
         def registroEquipo():
             if request.method == 'POST':
                 nombreDesarrollador = request.form.get("nombreDesarrollador")
@@ -370,7 +418,6 @@ def crear_app():
                 return None
 
         @app.route('/dashcompany')
-        @login_required
         def dashcompany():
             if 'email' not in session or con_bd.usuarios.find_one({"email": session['email'], "rol": "Empresa"}) is None:
                 return redirect(url_for('login'))
@@ -397,7 +444,6 @@ def crear_app():
 
 
         @app.route('/enviar_solicitud', methods=['POST'])
-        @login_required
         def enviar_solicitud():
             try:
                 if 'email' not in session or con_bd.usuarios.find_one({"email": session['email'], "rol": "Empresa"}) is None:
@@ -445,7 +491,6 @@ def crear_app():
                 return []
 
         @app.route('/empresas')
-        @login_required
         def ver_empresas():
             if 'email' not in session:
                 return redirect(url_for('login'))
@@ -476,7 +521,6 @@ def crear_app():
                 return []
 
         @app.route('/solicitudes')
-        @login_required
         def ver_solicitudes():
             if 'email' not in session:
                 return redirect(url_for('login'))
@@ -522,7 +566,6 @@ def crear_app():
         @app.route('/')
         @app.route('/index')
         @app.route('/home')
-        @login_required
         def index():
             
             if 'email' not in session:
@@ -545,7 +588,6 @@ def crear_app():
             return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin )
 
         @app.route('/registrar_proyecto', methods=['POST'])
-        @login_required
         def registrar_proyecto():
             if 'email' not in session:
                 return redirect(url_for('login'))
@@ -572,7 +614,6 @@ def crear_app():
                 flash('Proyecto registrado con éxito', 'success')
                 return redirect(url_for('index'))
         @app.route('/crear_actividad', methods=['POST'])
-        @login_required
         def crear_actividad():
             if request.method == 'POST':
                 # Procesa la información del formulario para crear una nueva actividad
@@ -594,7 +635,6 @@ def crear_app():
                 return redirect(url_for('proyecto'))
             
         @app.route('/editar_estado/<proyecto_id>', methods=['GET', 'POST'])
-        @login_required
         def editar_estado(proyecto_id):
             if request.method == 'POST':
                 nuevo_estado = request.form.get("nuevo_estado")
@@ -616,7 +656,6 @@ def crear_app():
 
             
         @app.route('/proyecto')
-        @login_required
         def proyecto():
             if 'email' not in session:
                 return redirect(url_for('login'))
@@ -638,7 +677,6 @@ def crear_app():
 
         # Ruta para el formulario de asignar equipo
         @app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
-        @login_required
         def asignar_equipo(proyecto_id):
             if request.method == 'POST':
                 nombre_equipo = request.form.get("nombre_equipo")
@@ -669,7 +707,6 @@ def crear_app():
             return render_template('asignar_equipo.html', proyecto_id=proyecto_id, usuarios=usuarios)
 
         @app.route('/notificar_equipo/<proyecto_id>', methods=['GET', 'POST'])
-        @login_required
         def notificar_equipo(proyecto_id):
             if 'email' not in session:
                 return redirect(url_for('login'))
@@ -691,7 +728,6 @@ def crear_app():
 
 
         @app.route('/asignar_equipo', methods=['GET'])
-        @login_required
         def mostrar_formulario_asignar_equipo():
             # Obtén la lista de usuarios con el rol "Desarrollador" desde tu base de datos
             usuarios_desarrolladores = con_bd.usuarios.find({"rol": "Desarrollador"})
