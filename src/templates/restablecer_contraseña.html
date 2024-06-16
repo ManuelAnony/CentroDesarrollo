@@ -20,8 +20,11 @@
               <input type="email" class="input-field" placeholder="Correo Electrónico" autocomplete="off" id="email" name="email" required />
             </div>
             <div class="btn">
-              <button class="button1" type="submit">Enviar Enlace</button>
+              <button class="button1" type="submit">&nbsp;Enviar Enlace </button>
+              
+              <button class="button2" type="button" onclick="location.href='{{ url_for('login') }}'">Regresar al Login</button>
             </div>
+            
           </form>
         </div>
       </div>

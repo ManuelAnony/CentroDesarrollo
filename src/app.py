@@ -253,7 +253,7 @@ def crear_app():
                         flash('Inicio de sesión exitoso como empresa', 'success')
                         return redirect(url_for('dashcompany'))
                     else:
-                        flash('La cuenta no está verificada.', 'danger')
+                        flash('Error vuelve a intentarlo.', 'danger')
                 else:   
                     flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
 

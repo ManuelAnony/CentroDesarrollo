@@ -1,197 +1,210 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Inicio</title>
-        <meta name="description" content="">
-        <link rel="stylesheet" href="{{url_for('static', filename = 'css/normalise.css')}}">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-        <style>
-          /* Estilos para el mensaje de error */
-          .error-message {
-              color: red;
-              display: none; /* Ocultar por defecto */
-              position: absolute;
-              top: 100%;
-              left: 0;
-              font-size: 0.8em;
-          }
-        </style>
-    </head>
-    <body>
-        <div class="container-left">
-            <div class="centered-object">
-                <div class="card">
-                    <div class="card2">
-                        <form class="form" method="POST">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Inicio</title>
+    <meta name="description" content="">
+    <link rel="stylesheet" href="{{url_for('static', filename = 'css/normalise.css')}}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <style>
+        .alert-floating {
+            position: fixed;
+            top: 20px;
+            left: 20px; /* Posiciona la alerta en la esquina superior izquierda */
+            z-index: 1050;
+        }
+        .password-toggle {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Bloque para mostrar mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-floating">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="container-left">
+        <div class="centered-object">
+            <div class="card">
+                <div class="card2">
+                    <form class="form" method="POST" id="registrationForm">
                         <p id="heading">Registra tu empresa</p>
                         <div class="field">
-                          <svg
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                            height="16"
-                            width="16"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="input-icon"
-                          >
-                          
-                            <path
-                            class="cls-2"
-                            d="M125.92054,105.8632a5.80889,5.80889,0,0,0-3.12736-4.21271c-5.43886-2.71133-17.3754-6.718-17.3754-6.718H104.408l-3.26621,4.35761,3.06215,21.18619h22.81418A126.32884,126.32884,0,0,0,125.92054,105.8632Z"
-                            ></path>
-                          </svg>
-                          <input
-                            type="text"
-                            class="input-field"
-                            placeholder="Nombre Empresa"
-                            autocomplete="off"
-                            id="nombreEmpresa"
-                            name="nombreEmpresa"
-                            required
-                          />
+                            <svg
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                height="16"
+                                width="16"
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="input-icon"
+                            >
+                                <path
+                                    class="cls-2"
+                                    d="M125.92054,105.8632a5.80889,5.80889,0,0,0-3.12736-4.21271c-5.43886-2.71133-17.3754-6.718-17.3754-6.718H104.408l-3.26621,4.35761,3.06215,21.18619h22.81418A126.32884,126.32884,0,0,0,125.92054,105.8632Z"
+                                ></path>
+                            </svg>
+                            <input
+                                type="text"
+                                class="input-field"
+                                placeholder="Nombre Empresa"
+                                autocomplete="off"
+                                id="nombreEmpresa"
+                                name="nombreEmpresa"
+                                value="{{ request.form.nombreEmpresa }}"
+                                required
+                            />
                         </div>
 
                         <div class="field">
-                          <svg
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                            height="16"
-                            width="16"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="input-icon"
-                          >
-                            <path
-                              d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z"
-                            ></path>
-                          </svg>
-                          <input
-                            type="text"
-                            class="input-field"
-                            placeholder="Nit"
-                            autocomplete="off"
-                            id="nit"
-                            name="nit"
-                            required
-                          />
-                          <div class="error-message" id="nitError">Mensaje de error</div>
+                            <svg
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                height="16"
+                                width="16"
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="input-icon"
+                            >
+                                <path
+                                    d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z"
+                                ></path>
+                            </svg>
+                            <input
+                                type="text"
+                                class="input-field"
+                                placeholder="Nit"
+                                autocomplete="off"
+                                id="nit"
+                                name="nit"
+                                value="{{ request.form.nit }}"
+                                required
+                            />
+                            <div class="error-message" id="nitError">El NIT solo puede contener números.</div>
                         </div>
                         <div class="field">
-                          <svg 
-                          viewBox="0 0 16 16"
-                          fill="currentColor"
-                          height="16"
-                          width="16"
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="input-icon"
-                          >
-                            <path 
-                              d="M12,12.5c-3.04,0-5.5,1.73-5.5,3.5s2.46,3.5,5.5,3.5,5.5-1.73,5.5-3.5-2.46-3.5-5.5-3.5Zm0-.5c1.66,0,3-1.34,3-3s-1.34-3-3-3-3,1.34-3,3,1.34,3,3,3Z">
-                            </path>
-                          </svg>
-                          <input
-                            type="text"
-                            class="input-field"
-                            placeholder="Administrador"
-                            autocomplete="off"
-                            id="administrador"
-                            name="administrador"
-                            required
-                          />
+                            <svg 
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                height="16"
+                                width="16"
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="input-icon"
+                            >
+                                <path 
+                                    d="M12,12.5c-3.04,0-5.5,1.73-5.5,3.5s2.46,3.5,5.5,3.5,5.5-1.73,5.5-3.5-2.46-3.5-5.5-3.5Zm0-.5c1.66,0,3-1.34,3-3s-1.34-3-3-3-3,1.34-3,3,1.34,3,3,3Z">
+                                </path>
+                            </svg>
+                            <input
+                                type="text"
+                                class="input-field"
+                                placeholder="Administrador"
+                                autocomplete="off"
+                                id="administrador"
+                                name="administrador"
+                                value="{{ request.form.administrador }}"
+                                required
+                            />
                         </div>
                         <div class="field">
-                          <svg
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                            height="16"
-                            width="16"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="input-icon"
-                          >
-                            <path
-                              d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z"
-                            ></path>
-                          </svg>
-                          <input
-                            type="text"
-                            class="input-field"
-                            placeholder="Email"
-                            autocomplete="off"
-                            id="email"
-                            name="email"
-                            required
-                          />
+                            <svg
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                height="16"
+                                width="16"
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="input-icon"
+                            >
+                                <path
+                                    d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z"
+                                ></path>
+                            </svg>
+                            <input
+                                type="text"
+                                class="input-field"
+                                placeholder="Email"
+                                autocomplete="off"
+                                id="email"
+                                name="email"
+                                value="{{ request.form.email }}"
+                                required
+                            />
                         </div>
-                        <div class="field">
-                          <svg
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                            height="16"
-                            width="16"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="input-icon"
-                          >
-                            <path
-                              d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"
-                            ></path>
-                          </svg>
-                          <input 
-                          type="password"
-                          id="password"
-                          name="password" 
-                          class="input-field" 
-                          placeholder="Password"
-                          required
-                           />
-                          
+                        <div class="field password-field">
+                            <svg
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                height="16"
+                                width="16"
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="input-icon"
+                            >
+                                <path
+                                    d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"
+                                ></path>
+                            </svg>
+                            <input 
+                                type="password"
+                                id="password"
+                                name="password" 
+                                class="input-field" 
+                                placeholder="Password"
+                                required
+                            />
+                            <span class="password-toggle" onclick="togglePassword('password')">&#128065;</span>
                         </div>
-                        <div class="field">
-                          <svg
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                            height="16"
-                            width="16"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="input-icon"
-                          >
-                            <path
-                              d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"
-                            ></path>
-                          </svg>
-                          <input 
-                          type="password"
-                          id="confirmar_password"
-                          name="confirmar_password" 
-                          class="input-field" 
-                          placeholder="Confirma tu Password"
-                          required 
-                          />
+                        <div class="field password-field">
+                            <svg
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                                height="16"
+                                width="16"
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="input-icon"
+                            >
+                                <path
+                                    d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"
+                                ></path>
+                            </svg>
+                            <input 
+                                type="password"
+                                id="confirmar_password"
+                                name="confirmar_password" 
+                                class="input-field" 
+                                placeholder="Confirma tu Password"
+                                required 
+                            />
+                            <span class="password-toggle" onclick="togglePassword('confirmar_password')">&#128065;</span>
                         </div>
-                        
 
                         <div class="btn">
-                          
-                          <button class="button2" >Registrate</button>
+                            <button class="button2" type="submit">Registrate</button>
                         </div>
                         <button class="button3" type="button" onclick="location.href='{{ url_for('login') }}'">Ya tengo Cuenta</button>
-
-                      </form>
-                    </div>
-                  </div>
-                  
+                    </form>
+                </div>
             </div>
         </div>
-    
-        <div class="container-right m-5">
-     
+    </div>
 
-          <div class="textInformation col">
+    <div class="container-right m-5">
+        <div class="textInformation col">
             <h1>Crea tu cuenta</h1>
             <p>Accede a nuestros servicios de gestión de proyectos con contacto directo de programadores a empresa.</p>
-          </div>
-          
-          <div class="animation position-relative top-100">
+        </div>
+        
+        <div class="animation position-relative top-100">
             <div class="cube"><img src="{{url_for('static', filename='images/icons/b.png')}}" alt=""></div>
             <div class="cube"><img src="{{url_for('static', filename='images/icons/c.png')}}" alt=""></div>
             <div class="cube"><img src="{{url_for('static', filename='images/icons/h.png')}}" alt=""></div>
@@ -199,83 +212,108 @@
             <div class="cube"><img src="{{url_for('static', filename='images/icons/m.png')}}" alt=""></div>
             <div class="cube"><img src="{{url_for('static', filename='images/icons/p.png')}}" alt=""></div>
             <div class="cube"><img src="{{url_for('static', filename='images/icons/s.png')}}" alt=""></div>
-          </div>
         </div>
-    
-    
-        <script src="" async defer></script>
-        
-        <script>
-         // Función para validar el campo de NIT para que solo permita números
-         document.getElementById('nit').addEventListener('input', function() {
-          var nitInput = document.getElementById('nit');
-          var nitError = document.getElementById('nitError');
-          var regex = /^[0-9]*$/; // Expresión regular para validar solo números
+    </div>
 
-          if (!regex.test(nitInput.value)) {
-              nitError.textContent = 'El NIT solo puede contener números.';
-              nitError.style.display = 'block';
-          } else {
-              nitError.style.display = 'none';
-          }
-       });
+    <script>
+        // Función para validar el campo de NIT para que solo permita números
+        document.getElementById('nit').addEventListener('input', function() {
+            var nitInput = document.getElementById('nit');
+            var nitError = document.getElementById('nitError');
+            var regex = /^[0-9]*$/; // Expresión regular para validar solo números
 
-           // Función para mostrar el primer error en el formulario
-        function showFirstError(errors) {
-          // Recorremos los errores
-          for (const error in errors) {
-              if (errors.hasOwnProperty(error)) {
-                  // Si hay un error, lo mostramos y salimos de la función
-                  if (errors[error]) {
-                      alert(errors[error]);
-                      return;
-                  }
-              }
-          }
-      }
+            if (!regex.test(nitInput.value)) {
+                nitError.textContent = 'El NIT solo puede contener números.';
+                nitError.style.display = 'block';
+            } else {
+                nitError.style.display = 'none';
+            }
+        });
+
         // Función para permitir únicamente números en el campo NIT
         function allowOnlyNumbers(event) {
-          const charCode = event.keyCode;
-          if (charCode < 48 || charCode > 57) {
-              event.preventDefault();
-          }
-      }
-      // Escuchamos el envío del formulario
-      document.getElementById('registrationForm').addEventListener('submit', function(event) {
-          // Obtenemos los valores de los campos
-          const nombreEmpresa = document.getElementById('nombreEmpresa').value.trim();
-          const nit = document.getElementById('nit').value.trim();
-          const email = document.getElementById('email').value.trim();
-          const password = document.getElementById('password').value;
-          const confirmPassword = document.getElementById('confirmPassword').value;
+            const charCode = event.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                event.preventDefault();
+            }
+        }
 
-          // Objeto para almacenar los errores
-          const errors = {};
+        // Función para mostrar las alertas automáticamente y desaparecerlas después de 4 segundos
+        function showAlert(message, category) {
+            const alertContainer = document.createElement('div');
+            alertContainer.className = `alert alert-${category} alert-dismissible fade show alert-floating`;
+            alertContainer.role = 'alert';
+            alertContainer.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
 
-          // Validaciones
-          if (nombreEmpresa.length < 3) {
-              errors['nombreEmpresa'] = "El nombre de la empresa debe tener al menos 3 caracteres.";
-          }
-          if (nit.length < 5) {
-              errors['nit'] = "El NIT debe tener al menos 5 caracteres.";
-          }
-          if (!email.match(/[^@]+@[^@]+\.[^@]+/)) {
-              errors['email'] = "El correo electrónico no es válido.";
-          }
-          if (password.length < 8) {
-              errors['password'] = "La contraseña debe tener al menos 8 caracteres.";
-          }
-          if (password !== confirmPassword) {
-              errors['confirmPassword'] = "Las contraseñas no coinciden.";
-          }
+            document.body.appendChild(alertContainer);
 
-          // Si hay errores, prevenimos el envío del formulario y mostramos el primer error
-          if (Object.values(errors).some(error => error)) {
-              event.preventDefault();
-              showFirstError(errors);
-          }
-      });
-        </script>
-    </body>
-    
+            setTimeout(() => {
+                alertContainer.classList.remove('show');
+                alertContainer.classList.add('hide');
+            }, 4000);
+        }
+
+        // Función para mostrar/ocultar la contraseña
+        function togglePassword(fieldId) {
+            var field = document.getElementById(fieldId);
+            if (field.type === "password") {
+                field.type = "text";
+            } else {
+                field.type = "password";
+            }
+        }
+
+        // Validación del formulario antes de enviar
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            const nombreEmpresa = document.getElementById('nombreEmpresa').value.trim();
+            const nit = document.getElementById('nit').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmar_password = document.getElementById('confirmar_password').value;
+
+            // Validaciones
+            if (nombreEmpresa.length < 3) {
+                showAlert('El nombre de la empresa debe tener al menos 3 caracteres.', 'danger');
+                event.preventDefault();
+                return;
+            }
+
+            if (!/^[0-9]*$/.test(nit)) {
+                showAlert('El NIT solo puede contener números.', 'danger');
+                event.preventDefault();
+                return;
+            }
+
+            if (!email.match(/[^@]+@[^@]+\.[^@]+/)) {
+                showAlert('El correo electrónico no es válido.', 'danger');
+                event.preventDefault();
+                return;
+            }
+
+            if (password.length < 8) {
+                showAlert('La contraseña debe tener al menos 8 caracteres.', 'danger');
+                event.preventDefault();
+                return;
+            }
+
+            if (password !== confirmar_password) {
+                showAlert('Las contraseñas no coinciden.', 'danger');
+                event.preventDefault();
+            }
+        });
+
+        // Función para ocultar automáticamente las alertas después de 4 segundos
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.classList.remove('show');
+                alert.classList.add('hide');
+            });
+        }, 4000);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
 </html>
