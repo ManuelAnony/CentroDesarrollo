@@ -38,6 +38,48 @@ def crear_app():
         def generate_verification_code():
             return ''.join(str(random.randint(0, 9)) for _ in range(6))
         
+        
+        ##Cambio contraseña
+        @app.route('/change_password', methods=['GET', 'POST'])
+        def change_password():
+            if 'email' not in session:
+                return redirect(url_for('login'))
+            
+            email_empresa = session['email']
+            empresa = obtener_datos_empresa(email_empresa)
+            
+            if request.method == 'POST':
+                current_password = request.form.get('current_password')
+                new_password = request.form.get('new_password')
+                confirm_new_password = request.form.get('confirm_new_password')
+
+                if not current_password or not new_password or not confirm_new_password:
+                    flash('Por favor, completa todos los campos.', 'danger')
+                    return redirect(url_for('change_password'))
+
+                usuario = con_bd.usuarios.find_one({"email": email_empresa})
+
+                if not usuario or not check_password_hash(usuario['password'], current_password):
+                    flash('La contraseña actual no es correcta.', 'danger')
+                    return redirect(url_for('change_password'))
+
+                if new_password != confirm_new_password:
+                    flash('Las nuevas contraseñas no coinciden.', 'danger')
+                    return redirect(url_for('change_password'))
+
+                if current_password == new_password:
+                    flash('La nueva contraseña no puede ser igual a la anterior.', 'danger')
+                    return redirect(url_for('change_password'))
+
+                hashed_new_password = generate_password_hash(new_password)
+                con_bd.usuarios.update_one({"email": email_empresa}, {"$set": {"password": hashed_new_password}})
+                flash('La contraseña ha sido actualizada correctamente.', 'success')
+                return redirect(url_for('dashcompany'))
+
+            return render_template('change_password.html', **empresa)
+
+        ##Cambio Contraseña
+        
         ##Inicio Restablecer contraseña
         # Función para enviar correo de restablecimiento de contraseña
         def send_reset_email(to_email, reset_link):
