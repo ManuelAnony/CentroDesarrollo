@@ -39,14 +39,14 @@ def crear_app():
             return ''.join(str(random.randint(0, 9)) for _ in range(6))
         
         
-        ##Cambio contraseña
+        ##Cambio contraseña empresa
         @app.route('/change_password', methods=['GET', 'POST'])
         def change_password():
             if 'email' not in session:
                 return redirect(url_for('login'))
             
-            email_empresa = session['email']
-            empresa = obtener_datos_empresa(email_empresa)
+            email = session['email']
+            usuario = con_bd.usuarios.find_one({"email": email})
             
             if request.method == 'POST':
                 current_password = request.form.get('current_password')
@@ -56,8 +56,6 @@ def crear_app():
                 if not current_password or not new_password or not confirm_new_password:
                     flash('Por favor, completa todos los campos.', 'danger')
                     return redirect(url_for('change_password'))
-
-                usuario = con_bd.usuarios.find_one({"email": email_empresa})
 
                 if not usuario or not check_password_hash(usuario['password'], current_password):
                     flash('La contraseña actual no es correcta.', 'danger')
@@ -72,11 +70,18 @@ def crear_app():
                     return redirect(url_for('change_password'))
 
                 hashed_new_password = generate_password_hash(new_password)
-                con_bd.usuarios.update_one({"email": email_empresa}, {"$set": {"password": hashed_new_password}})
+                con_bd.usuarios.update_one({"email": email}, {"$set": {"password": hashed_new_password}})
                 flash('La contraseña ha sido actualizada correctamente.', 'success')
-                return redirect(url_for('dashcompany'))
 
-            return render_template('change_password.html', **empresa)
+                if usuario['rol'] == 'Empresa':
+                    return redirect(url_for('dashcompany'))
+                elif usuario['rol'] == 'Desarrollador':
+                    return redirect(url_for('proyecto'))
+                elif usuario['rol'] == 'Administrador':
+                    return redirect(url_for('index'))
+
+            return render_template('change_password.html', usuario=usuario)
+
 
         ##Cambio Contraseña
         
@@ -676,34 +681,76 @@ def crear_app():
                 flash('Actividad creada con éxito', 'success')
                 return redirect(url_for('proyecto'))
             
+        
         @app.route('/editar_estado/<proyecto_id>', methods=['GET', 'POST'])
         def editar_estado(proyecto_id):
             if request.method == 'POST':
                 nuevo_estado = request.form.get("nuevo_estado")
 
                 # Actualiza el estado del proyecto en la base de datos
-                proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
-                proyecto["estado"] = nuevo_estado
-                con_bd.proyectos.update_one({"_id": ObjectId(proyecto_id)}, {"$set": proyecto})
+                con_bd.proyectos.update_one({"_id": ObjectId(proyecto_id)}, {"$set": {"estado": nuevo_estado}})
 
                 flash('Estado del proyecto actualizado', 'success')
                 return redirect(url_for('proyecto'))
 
             # Obtén el proyecto que se va a editar y pasa su estado actual al formulario
             proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
-            estado_actual = proyecto.get("estado")
+            
+            if not proyecto:
+                flash('Proyecto no encontrado.', 'danger')
+                return redirect(url_for('proyecto'))
+            
+            return render_template('editar_estado.html', proyecto=proyecto)
 
-            return render_template('editar_estado.html', proyecto_id=proyecto_id, estado_actual=estado_actual)
+
+        ##Panel Desarrollador mods
+        @app.route('/actualizar_actividad', methods=['POST'])
+        def actualizar_actividad():
+            data = request.get_json()
+            actividad_id = data.get('actividad_id')
+            nuevo_estado = data.get('nuevo_estado')
+            observaciones = data.get('observaciones')
+
+            if not actividad_id or not nuevo_estado:
+                return jsonify({'error': 'Datos incompletos'}), 400
+
+            con_bd.actividades.update_one(
+                {"_id": ObjectId(actividad_id)},
+                {"$set": {"estado": nuevo_estado, "observaciones": observaciones}}
+            )
+
+            return jsonify({'success': 'Actividad actualizada'})
 
 
+            return jsonify({'success': 'Estado actualizado'})
+
+        @app.route('/proyecto/<proyecto_id>', methods=['GET'])
+        def ver_proyecto(proyecto_id):
+            if 'email' not in session:
+                return redirect(url_for('login'))
+            
+            proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+            actividades = list(con_bd.actividades.find({"proyecto_id": ObjectId(proyecto_id)}))
+
+            if not proyecto:
+                flash('Proyecto no encontrado.', 'danger')
+                return redirect(url_for('proyecto'))
+            
+            return render_template('proyecto_detalle.html', proyecto=proyecto, actividades=actividades)
+
+
+        ##Panel Desarrollador mods
             
         @app.route('/proyecto')
         def proyecto():
             if 'email' not in session:
                 return redirect(url_for('login'))
+            
+            email_usuario = session['email']
+            usuario = con_bd.usuarios.find_one({"email": email_usuario})
 
-            # Consulta para obtener los proyectos asignados al administrador
-            proyectos_cursor = con_bd.proyectos.find({"miembros_equipo": session['email']})
+            # Consulta para obtener los proyectos asignados al desarrollador
+            proyectos_cursor = con_bd.proyectos.find({"miembros_equipo": email_usuario})
             proyectos = list(proyectos_cursor)
 
             # Consulta para obtener las actividades relacionadas con cada proyecto
@@ -714,7 +761,10 @@ def crear_app():
                 actividades = list(actividades_cursor)
                 actividades_por_proyecto[proyecto['_id']] = actividades
 
-            return render_template('proyecto.html', proyectos=proyectos, actividades_por_proyecto=actividades_por_proyecto)
+            return render_template('proyecto.html', usuario=usuario, proyectos=proyectos, actividades_por_proyecto=actividades_por_proyecto)
+
+
+
 
 
         # Ruta para el formulario de asignar equipo

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle del Proyecto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{url_for('static', filename = 'css/normalise.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/adm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/login.css') }}">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        .alert-floating {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1050;
+        }
+        .btn-custom {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .form-container {
+            margin-top: 20px;
+        }
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .activity-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .status-sin-iniciar {
+            background-color: #ffcccc; /* Rojo claro */
+            color: #b30000;
+        }
+        .status-en-proceso {
+            background-color: #ffffcc; /* Amarillo claro */
+            color: #e6e600;
+        }
+        .status-finalizado {
+            background-color: #ccffcc; /* Verde claro */
+            color: #009900;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+<body>
+    <!-- Bloque para mostrar mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-floating">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="container pt-5">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card card-body">
+                    <h2>Datos del Proyecto</h2>
+                    <ul>
+                        <li>Nombre: {{ proyecto.nombre }}</li>
+                        <li>Descripción: {{ proyecto.descripcion }}</li>
+                        <li>Fecha de Inicio: {{ proyecto.fecha_inicio }}</li>
+                        <li>Fecha de Finalización: {{ proyecto.fecha_finalizacion }}</li>
+                        <li>Estado: {{ proyecto.estado }}</li>
+                    </ul>
+                    <a href="{{ url_for('editar_estado', proyecto_id=proyecto._id) }}" class="btn btn-custom mt-3">Editar Estado del Proyecto</a>
+                    <a href="{{ url_for('proyecto') }}" class="btn btn-danger mt-3">Volver</a>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card card-body">
+                    <h1>Actividades del Proyecto</h1>
+                    <div class="form-container">
+                        <ul>
+                            {% for actividad in actividades %}
+                                <li class="activity-item">
+                                    <div>
+                                        <strong>{{ actividad.nombre }}</strong> - {{ actividad.fecha_vencimiento }}
+                                        <br>
+                                        Observaciones: <textarea class="form-control mt-1 observaciones" data-actividad-id="{{ actividad._id }}">{{ actividad.observaciones }}</textarea>
+                                    </div>
+                                    <div>
+                                        <select class="form-select form-select-sm ms-2 update-activity-status" data-actividad-id="{{ actividad._id }}">
+                                            <option value="Sin Iniciar" class="status-sin-iniciar" {% if actividad.estado == "Sin Iniciar" %}selected{% endif %}>Sin Iniciar</option>
+                                            <option value="En Proceso" class="status-en-proceso" {% if actividad.estado == "En Proceso" %}selected{% endif %}>En Proceso</option>
+                                            <option value="Finalizado" class="status-finalizado" {% if actividad.estado == "Finalizado" %}selected{% endif %}>Finalizado</option>
+                                        </select>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            function updateStatusColor(element) {
+                var status = element.val();
+                element.removeClass("status-sin-iniciar status-en-proceso status-finalizado");
+                if (status == "Sin Iniciar") {
+                    element.addClass("status-sin-iniciar");
+                } else if (status == "En Proceso") {
+                    element.addClass("status-en-proceso");
+                } else if (status == "Finalizado") {
+                    element.addClass("status-finalizado");
+                }
+            }
+
+            $(".update-activity-status").each(function() {
+                updateStatusColor($(this));
+            });
+
+            $(".update-activity-status").change(function() {
+                var actividadId = $(this).data("actividad-id");
+                var nuevoEstado = $(this).val();
+                var observaciones = $(this).closest(".activity-item").find(".observaciones").val();
+                updateStatusColor($(this));
+
+                $.ajax({
+                    url: "/actualizar_actividad",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ actividad_id: actividadId, nuevo_estado: nuevoEstado, observaciones: observaciones }),
+                    success: function(response) {
+                        alert("Actividad actualizada.");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error al actualizar la actividad:", error);
+                    }
+                });
+            });
+
+            $(".observaciones").change(function() {
+                var actividadId = $(this).data("actividad-id");
+                var nuevoEstado = $(this).closest(".activity-item").find(".update-activity-status").val();
+                var observaciones = $(this).val();
+
+                $.ajax({
+                    url: "/actualizar_actividad",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ actividad_id: actividadId, nuevo_estado: nuevoEstado, observaciones: observaciones }),
+                    success: function(response) {
+                        alert("Observaciones actualizadas.");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error al actualizar las observaciones:", error);
+                    }
+                });
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+</body>
+</html>
