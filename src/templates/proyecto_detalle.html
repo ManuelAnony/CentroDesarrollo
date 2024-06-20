@@ -2,12 +2,10 @@
 <html lang="es" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Detalle del Proyecto</title>
+    <title>Service Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{url_for('static', filename = 'css/normalise.css')}}">
-    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/adm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/normalise.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename = 'css/login.css') }}">
-    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <style>
         .alert-floating {
             position: fixed;
@@ -20,30 +18,7 @@
             color: white;
         }
         .form-container {
-            margin-top: 20px;
-        }
-        .activity-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            align-items: center;
-        }
-        .activity-status {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-        .status-sin-iniciar {
-            background-color: #ffcccc; /* Rojo claro */
-            color: #b30000;
-        }
-        .status-en-proceso {
-            background-color: #ffffcc; /* Amarillo claro */
-            color: #e6e600;
-        }
-        .status-finalizado {
-            background-color: #ccffcc; /* Verde claro */
-            color: #009900;
+            display: none;
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
@@ -64,108 +39,433 @@
         {% endif %}
     {% endwith %}
 
-    <div class="container pt-5">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card card-body">
-                    <h2>Datos del Proyecto</h2>
-                    <ul>
-                        <li>Nombre: {{ proyecto.nombre }}</li>
-                        <li>Descripción: {{ proyecto.descripcion }}</li>
-                        <li>Fecha de Inicio: {{ proyecto.fecha_inicio }}</li>
-                        <li>Fecha de Finalización: {{ proyecto.fecha_finalizacion }}</li>
-                        <li>Estado: {{ proyecto.estado }}</li>
-                    </ul>
-                    <a href="{{ url_for('editar_estado', proyecto_id=proyecto._id) }}" class="btn btn-custom mt-3">Editar Estado del Proyecto</a>
-                    <a href="{{ url_for('proyecto') }}" class="btn btn-danger mt-3">Volver</a>
+    <div class="d-flex justify-content-between mb-3 navbar">
+        <h1>Service Manager</h1>
+        <br>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="tabProyectos" data-toggle="tab" href="#proyectos" role="tab" aria-controls="proyectos" aria-selected="true">Proyectos</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabSolicitudes" data-toggle="tab" href="#solicitudes" role="tab" aria-controls="solicitudes" aria-selected="false">Solicitudes</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabEmpresas" data-toggle="tab" href="#empresas" role="tab" aria-controls="empresas" aria-selected="false">Empresas</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabRegistrarDesarrollador" data-toggle="tab" href="#registrarDesarrollador" role="tab" aria-controls="registrarDesarrollador" aria-selected="false">Registrar Desarrollador</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabSeguridad" data-toggle="tab" href="#seguridad" role="tab" aria-controls="#seguridad" aria-selected="false">Seguridad</a>                
+            </li>
+        </ul>
+        <div>
+            <a href="/logout" class="btn btn-danger">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="tab-content" id="myTabContent">
+        <!-- Contenido de Proyectos -->
+        <div id="proyectos" class="tab-pane fade show active" role="tabpanel" aria-labelledby="tabProyectos">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 m-0">
+                        <div class="card card-body">
+                            <!-- Contenido específico del dashboard -->
+                            <!-- Registrar nuevo proyecto -->
+                            <h2>Registrar Nuevo Proyecto</h2>
+                            <form method="POST" action="/registrar_proyecto">
+                                <!-- Contenido del formulario de registro -->
+                                <div class="form-group">
+                                    <label for="nombre_proyecto">Nombre del Proyecto:</label>
+                                    <input type="text" name="nombre_proyecto" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="descripcion">Descripción:</label>
+                                    <input type="text" name="descripcion" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fecha_inicio">Fecha de Inicio:</label>
+                                    <input type="date" name="fecha_inicio" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fecha_finalizacion">Fecha de Finalización:</label>
+                                    <input type="date" name="fecha_finalizacion" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="estado">Estado:</label>
+                                    <select name="estado" class="form-control" required>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="En Proceso">En Proceso</option>
+                                        <option value="Completado">Completado</option>
+                                    </select>
+                                </div>
+                                <br>
+                                <br>
+                                <input class="btn btn-primary btnRegistro" type="submit" value="Registrar Proyecto">
+                                <br>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card card-body">
+                            <h2>Proyectos en Curso</h2>
+                            <select id="filtroEstado" class="form-select mb-3" onchange="filtrarProyectos()">
+                                <option value="todos">Todos</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En Proceso">En Proceso</option>
+                                <option value="Completado">Completado</option>
+                            </select>
+                            <table class="table table-striped" id="tablaProyectos">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre del Proyecto</th>
+                                        <th>Descripción</th>
+                                        <th>Fecha de Inicio</th>
+                                        <th>Fecha de Finalización</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for proyecto in proyectos %}
+                                    <tr>
+                                        <td>{{ proyecto.nombre }}</td>
+                                        <td>{{ proyecto.descripcion }}</td>
+                                        <td>{{ proyecto.fecha_inicio }}</td>
+                                        <td>{{ proyecto.fecha_finalizacion }}</td>
+                                        <td>{{ proyecto.estado }}</td>
+                                        <td>
+                                            <a href="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-primary btn-sm">Asignar Equipo</a>
+                                            <a href="#" class="btn btn-primary btn-sm" onclick="confirmarEliminarProyecto('{{ proyecto._id }}')">Eliminar</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <div class="d-flex justify-content-between mt-3">
+                                <button class="btn btn-secondary" onclick="paginaAnterior()">Anterior</button>
+                                <button class="btn btn-secondary" onclick="paginaSiguiente()">Siguiente</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-8">
+        </div>
+
+        <!-- Contenido de Solicitudes -->
+        <div id="solicitudes" class="tab-pane fade" role="tabpanel" aria-labelledby="tabSolicitudes">
+            <div class="container pt-5">
                 <div class="card card-body">
-                    <h1>Actividades del Proyecto</h1>
-                    <div class="form-container">
-                        <ul>
-                            {% for actividad in actividades %}
-                                <li class="activity-item">
-                                    <div>
-                                        <strong>{{ actividad.nombre }}</strong> - {{ actividad.fecha_vencimiento }}
-                                        <br>
-                                        Observaciones: <textarea class="form-control mt-1 observaciones" data-actividad-id="{{ actividad._id }}">{{ actividad.observaciones }}</textarea>
-                                    </div>
-                                    <div>
-                                        <select class="form-select form-select-sm ms-2 update-activity-status" data-actividad-id="{{ actividad._id }}">
-                                            <option value="Sin Iniciar" class="status-sin-iniciar" {% if actividad.estado == "Sin Iniciar" %}selected{% endif %}>Sin Iniciar</option>
-                                            <option value="En Proceso" class="status-en-proceso" {% if actividad.estado == "En Proceso" %}selected{% endif %}>En Proceso</option>
-                                            <option value="Finalizado" class="status-finalizado" {% if actividad.estado == "Finalizado" %}selected{% endif %}>Finalizado</option>
-                                        </select>
-                                    </div>
-                                </li>
+                    <h2>Solicitudes</h2>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre de la Solicitud</th>
+                                <th>Descripción</th>
+                                <th>Fecha</th>
+                                <th>Empresa</th>
+                                <th>Estado</th>
+                                <th>Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for solicitud in solicitudes %}
+                            <tr>
+                                <td>{{ solicitud.nombre_solicitud }}</td>
+                                <td>{{ solicitud.descripcion_solicitud }}</td>
+                                <td>{{ solicitud.fecha }}</td>
+                                <td>{{ solicitud.email }}</td>
+                                <td>
+                                    <select class="form-select form-select-sm" onchange="cambiarEstadoSolicitud('{{ solicitud._id }}', this.value)">
+                                        <option value="En Estudio" {% if solicitud.estado == 'En Estudio' %}selected{% endif %}>En Estudio</option>
+                                        <option value="Aprobado" {% if solicitud.estado == 'Aprobado' %}selected{% endif %}>Aprobado</option>
+                                        <option value="Rechazado" {% if solicitud.estado == 'Rechazado' %}selected{% endif %}>Rechazado</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <a href="#" class="btn btn-danger btn-sm" onclick="confirmarEliminarSolicitud('{{ solicitud._id }}')">Eliminar</a>
+                                </td>
+                            </tr>
                             {% endfor %}
-                        </ul>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido de Empresas -->
+        <div id="empresas" class="tab-pane fade" role="tabpanel" aria-labelledby="tabEmpresas">
+            <div class="container pt-5">
+                <div class="card card-body">
+                    <h2>Información de las Empresas</h2>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre de la Empresa</th>
+                                <th>NIT</th>
+                                <th>Administrador</th>
+                                <th>Email de la Empresa</th>
+                                <th>Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios_empresa %}
+                            <tr>
+                                <td>{{ usuario.nombreEmpresa }}</td>
+                                <td>{{ usuario.nit }}</td>
+                                <td>{{ usuario.administrador }}</td>
+                                <td>{{ usuario.email }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-danger btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido de Registrar Desarrollador -->
+        <div id="registrarDesarrollador" class="tab-pane fade" role="tabpanel" aria-labelledby="tabRegistrarDesarrollador">
+            <div class="container pt-5">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card card-body">
+                            <form method="POST" action="{{ url_for('registroEquipo') }}">
+                                <h2>Registro Desarrollador</h2>
+                                <div class="form-group">
+                                    <label for="nombreDesarrollador">Nombre:</label>
+                                    <input type="text" id="nombreDesarrollador" name="nombreDesarrollador" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email:</label>
+                                    <input type="email" id="email" name="email" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rol">Rol:</label>
+                                    <select id="rol" name="rol" class="form-select" required>
+                                        <option value="Administrador">Administrador</option>
+                                        <option value="Desarrollador">Desarrollador</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="password">Password:</label>
+                                    <input type="password" id="password" name="password" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmar_password">Confirma tu Password:</label>
+                                    <input type="password" id="confirmar_password" name="confirmar_password" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Registrar</button>
+                            </form>
+                        </div>
                     </div>
+                    <div class="col-md-8">
+                        <div class="card card-body">
+                            <h2>Usuarios Registrados</h2>
+                            <select id="seleccionarInfo" class="form-select mb-3">
+                                <option value="">Selecciona...</option>
+                                <option value="infoDesarrolladores">Desarrolladores</option>
+                                <option value="infoAdministradores">Administradores</option>
+                            </select>
+                            <div id="infoDesarrolladores" style="display: none;">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre del Desarrollador</th>
+                                            <th>Email</th>
+                                            <th>Rol</th>
+                                            <th>Opciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for usuario in desarrolladores %}
+                                        <tr>
+                                            <td>{{ usuario.nombreDesarrollador }}</td>
+                                            <td>{{ usuario.email }}</td>
+                                            <td>{{ usuario.rol }}</td>
+                                            <td>
+                                                <a href="#" class="btn btn-danger btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="infoAdministradores" style="display: none;">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre del Administrador</th>
+                                            <th>Email</th>
+                                            <th>Rol</th>
+                                            <th>Opciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for usuario in usuarios_admin %}
+                                        <tr>
+                                            <td>{{ usuario.nombreDesarrollador }}</td>
+                                            <td>{{ usuario.email }}</td>
+                                            <td>{{ usuario.rol }}</td>
+                                            <td>
+                                                <a href="#" class="btn btn-danger btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido de Seguridad -->
+        <div id="seguridad" class="tab-pane fade" role="tabpanel" aria-labelledby="tabSeguridad">
+            <div class="container pt-5">
+                <div class="card card-body">
+                    <h2>Centro de Seguridad</h2>
+                    <p>Bienvenido al Centro de Seguridad del Centro Digital de Desarrollo Tecnológico (CDDT)!</p>
+                    <p>En esta sección, encontrarás información importante sobre ciberseguridad y recomendaciones para garantizar una experiencia segura al utilizar nuestra plataforma.</p>
+                    <h3>Nuestro Compromiso con la Seguridad</h3>
+                    <p>En el CDDT, la seguridad de nuestros usuarios es nuestra máxima prioridad. Nos esforzamos por implementar las mejores prácticas de seguridad y mantenernos actualizados sobre las últimas amenazas cibernéticas para proteger la información de nuestros usuarios.</p>
+                    <h3>Recomendaciones para Usuarios</h3>
+                    <ol>
+                        <li><strong>Contraseñas Seguras:</strong> Utiliza contraseñas fuertes y únicas para tu cuenta en el CDDT.</li>
+                        <li><strong>Autenticación de Dos Factores (2FA):</strong> Considera habilitar la autenticación de dos factores para una capa adicional de seguridad.</li>
+                        <li><strong>Actualizaciones de Software:</strong> Mantén actualizados tus dispositivos y aplicaciones.</li>
+                        <li><strong>Concientización sobre Phishing:</strong> Mantente alerta ante correos electrónicos sospechosos.</li>
+                    </ol>
+                    <h3>Recomendaciones para Administradores</h3>
+                    <ol>
+                        <li><strong>Gestión de Acceso:</strong> Implementa políticas de acceso sólidas y revisa regularmente los permisos de usuario.</li>
+                        <li><strong>Monitoreo de Actividades:</strong> Establece sistemas de monitoreo para detectar actividades sospechosas.</li>
+                        <li><strong>Respaldo de Datos:</strong> Realiza copias de seguridad regulares de los datos almacenados.</li>
+                    </ol>
+                    <h3>Reporte de Problemas de Seguridad</h3>
+                    <p>Si descubres alguna vulnerabilidad de seguridad o sospechas de actividades maliciosas en la plataforma, por favor reporta el problema de inmediato a nuestro equipo de seguridad.</p>
+                    <p>Gracias por tu compromiso con la seguridad en el Centro Digital de Desarrollo Tecnológico.</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        $(document).ready(function() {
-            function updateStatusColor(element) {
-                var status = element.val();
-                element.removeClass("status-sin-iniciar status-en-proceso status-finalizado");
-                if (status == "Sin Iniciar") {
-                    element.addClass("status-sin-iniciar");
-                } else if (status == "En Proceso") {
-                    element.addClass("status-en-proceso");
-                } else if (status == "Finalizado") {
-                    element.addClass("status-finalizado");
+        $(document).ready(function () {
+            $('#myTab a').on('shown.bs.tab', function (e) {
+                var target = $(e.target).attr('href');
+                if (target === '#registrarDesarrollador') {
+                    // Código específico para la pestaña de Registrar Desarrollador
+                    console.log('Mostrando pestaña Registrar Desarrollador');
                 }
-            }
-
-            $(".update-activity-status").each(function() {
-                updateStatusColor($(this));
-            });
-
-            $(".update-activity-status").change(function() {
-                var actividadId = $(this).data("actividad-id");
-                var nuevoEstado = $(this).val();
-                var observaciones = $(this).closest(".activity-item").find(".observaciones").val();
-                updateStatusColor($(this));
-
-                $.ajax({
-                    url: "/actualizar_actividad",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({ actividad_id: actividadId, nuevo_estado: nuevoEstado, observaciones: observaciones }),
-                    success: function(response) {
-                        alert("Actividad actualizada.");
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("Error al actualizar la actividad:", error);
-                    }
-                });
-            });
-
-            $(".observaciones").change(function() {
-                var actividadId = $(this).data("actividad-id");
-                var nuevoEstado = $(this).closest(".activity-item").find(".update-activity-status").val();
-                var observaciones = $(this).val();
-
-                $.ajax({
-                    url: "/actualizar_actividad",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({ actividad_id: actividadId, nuevo_estado: nuevoEstado, observaciones: observaciones }),
-                    success: function(response) {
-                        alert("Observaciones actualizadas.");
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("Error al actualizar las observaciones:", error);
-                    }
-                });
+                // Agregar lógica adicional si es necesario para otras pestañas
             });
         });
+
+        document.getElementById('seleccionarInfo').addEventListener('change', function () {
+            var seleccion = document.getElementById('seleccionarInfo').value;
+            if (seleccion === 'infoDesarrolladores') {
+                document.getElementById('infoDesarrolladores').style.display = 'block';
+                document.getElementById('infoAdministradores').style.display = 'none';
+            } else if (seleccion === 'infoAdministradores') {
+                document.getElementById('infoDesarrolladores').style.display = 'none';
+                document.getElementById('infoAdministradores').style.display = 'block';
+            }
+        });
+
+        function confirmarEliminarUsuario(usuarioId) {
+            if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+                window.location.href = "{{ url_for('eliminar_usuario', usuario_id='') }}" + usuarioId;
+            }
+        }
+
+        function confirmarEliminarSolicitud(solicitudId) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta solicitud?')) {
+                window.location.href = "{{ url_for('eliminar_solicitud', solicitud_id='') }}" + solicitudId;
+            }
+        }
+
+        function confirmarEliminarProyecto(proyectoId) {
+            if (confirm('¿Estás seguro de que deseas eliminar este proyecto?')) {
+                window.location.href = "{{ url_for('eliminar_proyecto', proyecto_id='') }}" + proyectoId;
+            }
+        }
+
+        function cambiarEstadoSolicitud(solicitudId, nuevoEstado) {
+            $.ajax({
+                url: "/cambiar_estado_solicitud",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ solicitud_id: solicitudId, nuevo_estado: nuevoEstado }),
+                success: function (response) {
+                    alert("Estado de la solicitud actualizado.");
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al actualizar el estado de la solicitud:", error);
+                }
+            });
+        }
+
+        var proyectosPorPagina = 6;
+        var paginaActual = 1;
+        var proyectos = {{ proyectos|tojson }};
+        
+        function mostrarProyectos() {
+            var tablaProyectos = document.getElementById('tablaProyectos').getElementsByTagName('tbody')[0];
+            tablaProyectos.innerHTML = '';
+            var inicio = (paginaActual - 1) * proyectosPorPagina;
+            var fin = inicio + proyectosPorPagina;
+            var proyectosPagina = proyectos.slice(inicio, fin);
+            proyectosPagina.forEach(function(proyecto) {
+                var fila = '<tr>' +
+                            '<td>' + proyecto.nombre + '</td>' +
+                            '<td>' + proyecto.descripcion + '</td>' +
+                            '<td>' + proyecto.fecha_inicio + '</td>' +
+                            '<td>' + proyecto.fecha_finalizacion + '</td>' +
+                            '<td>' + proyecto.estado + '</td>' +
+                            '<td>' +
+                                '<a href="{{ url_for("asignar_equipo", proyecto_id="") }}' + proyecto._id + '" class="btn btn-primary btn-sm">Asignar Equipo</a>' +
+                                '<a href="#" class="btn btn-primary btn-sm" onclick="confirmarEliminarProyecto(\'' + proyecto._id + '\')">Eliminar</a>' +
+                            '</td>' +
+                           '</tr>';
+                tablaProyectos.innerHTML += fila;
+            });
+        }
+
+        function paginaAnterior() {
+            if (paginaActual > 1) {
+                paginaActual--;
+                mostrarProyectos();
+            }
+        }
+
+        function paginaSiguiente() {
+            if (paginaActual * proyectosPorPagina < proyectos.length) {
+                paginaActual++;
+                mostrarProyectos();
+            }
+        }
+
+        function filtrarProyectos() {
+            var filtroEstado = document.getElementById('filtroEstado').value;
+            if (filtroEstado === 'todos') {
+                proyectos = {{ proyectos|tojson }};
+            } else {
+                proyectos = {{ proyectos|tojson }}.filter(function(proyecto) {
+                    return proyecto.estado === filtroEstado;
+                });
+            }
+            paginaActual = 1;
+            mostrarProyectos();
+        }
+
+        $(document).ready(function() {
+            mostrarProyectos();
+        });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -620,20 +620,23 @@ def crear_app():
             
             # Obtener empresas registradas
             #empresas = con_bd.usuarios.find({"rol": "Empresa"}, {"_id": 0, "nombreEmpresa": 1})
-            usuarios_empresa = obtener_usuarios_empresa()
+            #usuarios_empresa = obtener_usuarios_empresa()
             # Obtener solicitudes de la empresa actual
             # solicitudes = obtener_solicitudes_empresa(session['email'])  
-            solicitudes = obtener_solicitudes_empresa() 
-            
-            
+            #solicitudes = obtener_solicitudes_empresa()       
             # Obtener desarrolladores registrados
-            desarrolladores = obtener_usuarios_desarrollador()
-
-            usuarios_admin = obtener_usuarios_admin()    
+            #desarrolladores = obtener_usuarios_desarrollador()
+            #usuarios_admin = obtener_usuarios_admin()    
             # Obtener proyectos en curso desde la base de datos
-            proyectos = con_bd.proyectos.find()
-            return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin )
-
+            #proyectos = con_bd.proyectos.find()
+            proyectos = list(con_bd.proyectos.find())
+            usuarios_empresa = list(con_bd.usuarios.find({"rol": "Empresa"}))
+            solicitudes = list(con_bd.solicitudes.find())
+            desarrolladores = list(con_bd.usuarios.find({"rol": "Desarrollador"}))
+            usuarios_admin = list(con_bd.usuarios.find({"rol": "Administrador"}))
+            
+            #return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin )
+            return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin)
         @app.route('/registrar_proyecto', methods=['POST'])
         def registrar_proyecto():
             if 'email' not in session:
