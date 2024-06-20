@@ -5,24 +5,74 @@
 {% block content %}
 <div class="container pt-5">
     <div class="row">
-        <div class="card card-body">
-            <h1>Asignar Equipo</h1>
-    <form method="POST">
-    
-        <div class="form-group">
-            <label for="nombre_equipo">Nombre del Equipo:</label>
-            <input type="text" id="nombre_equipo" name="nombre_equipo" required>
+        <div class="col-md-6">
+            <div class="card card-body">
+                <h1>Detalles del Proyecto</h1>
+                <h3>Proyecto: {{ proyecto.nombre }}</h3>
+                <p>{{ proyecto.descripcion }}</p>
+                <p><strong>Fecha de Inicio:</strong> {{ proyecto.fecha_inicio }}</p>
+                <p><strong>Fecha de Finalización:</strong> {{ proyecto.fecha_finalizacion }}</p>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="cantidad_miembros">Cantidad de Miembros:</label>
-            <input type="number" id="cantidad_miembros" name="cantidad_miembros" min="1" required>
+        <div class="col-md-6">
+            <div class="card card-body">
+                <h1>Asignar Equipo</h1>
+                <form method="POST" action="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}">
+                    <div class="form-group">
+                        <label for="nombre_equipo">Nombre del Equipo:</label>
+                        <input type="text" id="nombre_equipo" name="nombre_equipo" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidad_miembros">Cantidad de Miembros:</label>
+                        <input type="number" id="cantidad_miembros" name="cantidad_miembros" class="form-control" min="1" required>
+                    </div>
+                    <div id="miembrosSelects">
+                        <!-- Cuadros desplegables se generarán aquí -->
+                    </div>
+                    <br>
+                    <button type="submit" class="btn btn-primary-custom">Asignar Equipo</button>
+                </form>
+            </div>
         </div>
-        <div id="miembrosSelects">
-            <!-- Cuadros desplegables se generarán aquí -->
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver</a>
         </div>
-        <br>
-        <button type="submit">Asignar Equipo</button>
-    </form>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <div class="card card-body">
+                <h2>
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseEquipos" aria-expanded="true" aria-controls="collapseEquipos">
+                        Equipos Creados
+                    </button>
+                </h2>
+                <div id="collapseEquipos" class="collapse">
+                    {% for equipo in equipos %}
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h3>{{ equipo.nombre }}</h3>
+                                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#equipo{{ equipo._id }}" aria-expanded="false" aria-controls="equipo{{ equipo._id }}">
+                                    Ver Miembros
+                                </button>
+                                <a href="{{ url_for('editar_equipo', equipo_id=equipo._id) }}" class="btn btn-warning-custom btn-sm">Editar</a>
+                                <a href="{{ url_for('eliminar_equipo', equipo_id=equipo._id) }}" class="btn btn-danger-custom btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar este equipo?');">Eliminar</a>
+                            </div>
+                            <div id="equipo{{ equipo._id }}" class="collapse">
+                                <div class="card-body">
+                                    <ul>
+                                        {% for miembro in equipo.miembros %}
+                                            <li>{{ miembro }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    <p><strong>Proyecto Asignado:</strong> {{ equipo.proyecto_nombre }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -36,8 +86,16 @@
         var cantidad = parseInt(cantidadMiembros.value);
 
         for (var i = 0; i < cantidad; i++) {
+            var div = document.createElement("div");
+            div.className = "form-group";
+
+            var label = document.createElement("label");
+            label.textContent = "Miembro " + (i + 1) + ":";
+            div.appendChild(label);
+
             var select = document.createElement("select");
             select.name = "miembros_" + i;  // Nombre único para cada cuadro desplegable
+            select.className = "form-control";
             select.required = true;
 
             // Rellena las opciones con los usuarios registrados
@@ -48,9 +106,9 @@
                 select.appendChild(option);
             {% endfor %}
 
-            miembrosSelects.appendChild(select);
+            div.appendChild(select);
+            miembrosSelects.appendChild(div);
         }
     });
 </script>
 {% endblock %}
-

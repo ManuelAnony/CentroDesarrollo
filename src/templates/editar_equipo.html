@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+
+{% block title %}Editar Equipo{% endblock %}
+
+{% block content %}
+<div class="container pt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card card-body">
+                <h1>Editar Equipo</h1>
+                <h3>Proyecto: {{ proyecto.nombre }}</h3>
+                <p>{{ proyecto.descripcion }}</p>
+                <p><strong>Fecha de Inicio:</strong> {{ proyecto.fecha_inicio }}</p>
+                <p><strong>Fecha de Finalización:</strong> {{ proyecto.fecha_finalizacion }}</p>
+                <form method="POST" action="{{ url_for('editar_equipo', equipo_id=equipo._id) }}">
+                    <div class="form-group">
+                        <label for="nombre_equipo">Nombre del Equipo:</label>
+                        <input type="text" id="nombre_equipo" name="nombre_equipo" class="form-control" value="{{ equipo.nombre }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidad_miembros">Cantidad de Miembros:</label>
+                        <input type="number" id="cantidad_miembros" name="cantidad_miembros" class="form-control" value="{{ equipo.miembros|length }}" min="1" required>
+                    </div>
+                    <div id="miembrosSelects">
+                        <!-- Cuadros desplegables se generarán aquí -->
+                        {% for miembro in equipo.miembros %}
+                            <div class="form-group">
+                                <label>Miembro:</label>
+                                <select name="miembros_{{ loop.index0 }}" class="form-control" required>
+                                    {% for usuario in usuarios %}
+                                        <option value="{{ usuario.email }}" {% if usuario.email == miembro %}selected{% endif %}>{{ usuario.email }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <br>
+                    <button type="submit" class="btn btn-primary-custom">Guardar Cambios</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
