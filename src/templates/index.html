@@ -40,14 +40,12 @@
         vertical-align: middle;
     }
   </style>
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 {% block content %}
 <div class="d-flex justify-content-between mb-3 navbar">
     <h1>Service Manager</h1>
-    
-    
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item">
             <a class="nav-link active" id="tabProyectos" data-toggle="tab" href="#proyectos" role="tab" aria-controls="proyectos" aria-selected="true">Proyectos</a>
@@ -102,7 +100,7 @@
                                     <option value="Completado">Completado</option>
                                 </select>
                             </div>
-                            <input class="btn btn-primary btnRegistro" type="submit" value="Registrar Proyecto">
+                            <input class="btn btn-primary-custom btnRegistro" type="submit" value="Registrar Proyecto">
                         </form>
                     </div>
                 </div>
@@ -127,7 +125,7 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="proyectos-table-body">
                                 {% for proyecto in proyectos %}
                                 <tr class="proyecto-item" data-estado="{{ proyecto.estado }}">
                                     <td>{{ proyecto.nombre }}</td>
@@ -136,16 +134,16 @@
                                     <td>{{ proyecto.fecha_finalizacion }}</td>
                                     <td>{{ proyecto.estado }}</td>
                                     <td>
-                                        <a href="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-primary btn-sm">Asignar Equipo</a>
-                                        <a href="#" class="btn btn-danger btn-sm" onclick="confirmarEliminarProyecto('{{ proyecto._id }}')">Eliminar</a>
+                                        <a href="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-primary-custom btn-sm">Asignar Equipo</a>
+                                        <a href="#" class="btn btn-danger-custom btn-sm" onclick="confirmarEliminarProyecto('{{ proyecto._id }}')">Eliminar</a>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                         <div class="d-flex justify-content-between">
-                        <button id="anterior" class="btn btn-primary" onclick="cambiarPagina(-1)">Anterior</button>
-                        <button id="siguiente" class="btn btn-primary" onclick="cambiarPagina(1)">Siguiente</button>
+                        <button id="anterior" class="btn btn-primary-custom" onclick="cambiarPagina(-1)">Anterior</button>
+                        <button id="siguiente" class="btn btn-primary-custom" onclick="cambiarPagina(1)">Siguiente</button>
                     </div>
                     </div>
                 </div>
@@ -169,7 +167,7 @@
                             <th>Opciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="solicitudes-table-body">
                         {% if solicitudes %}
                             {% for solicitud in solicitudes %}
                                 <tr>
@@ -197,6 +195,10 @@
                         {% endif %}
                     </tbody>
                 </table>
+                <div class="d-flex justify-content-between">
+                    <button id="anterior-solicitud" class="btn btn-primary-custom" onclick="cambiarPaginaSolicitudes(-1)">Anterior</button>
+                    <button id="siguiente-solicitud" class="btn btn-primary-custom" onclick="cambiarPaginaSolicitudes(1)">Siguiente</button>
+                </div>
             </div>
         </div>
     </div>
@@ -224,7 +226,7 @@
                             <td>{{ usuario.administrador }}</td>
                             <td>{{ usuario.email }}</td>
                             <td>
-                                <a href="#" class="btn btn-danger btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
+                                <a href="#" class="btn btn-danger-custom btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -265,7 +267,7 @@
                                 <label for="confirmar_password">Confirma tu Password</label>
                                 <input type="password" class="form-control" id="confirmar_password" name="confirmar_password" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Registrate</button>
+                            <button type="submit" class="btn btn-primary-custom">Registrate</button>
                         </form>
                     </div>
                 </div>
@@ -294,7 +296,7 @@
                                         <td>{{ usuario.email }}</td>
                                         <td>{{ usuario.rol }}</td>
                                         <td>
-                                            <a href="#" class="btn btn-danger btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
+                                            <a href="#" class="btn btn-danger-custom btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -318,7 +320,7 @@
                                         <td>{{ usuario.email }}</td>
                                         <td>{{ usuario.rol }}</td>
                                         <td>
-                                            <a href="#" class="btn btn-danger btn-sm" onclick="eliminarUsuario('{{ usuario.id }}')">Eliminar</a>
+                                            <a href="#" class="btn btn-danger-custom btn-sm" onclick="confirmarEliminarUsuario('{{ usuario._id }}')">Eliminar</a>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -372,7 +374,7 @@
             window.location.href = "{{ url_for('eliminar_usuario', usuario_id='') }}" + usuarioId;
         }
     }
-    function confirmarEliminarSolitud(solicitudId) {
+    function confirmarEliminarSolicitud(solicitudId) {
         if (confirm('¿Estás seguro de que deseas eliminar esta solicitud?')) {
             window.location.href = "{{ url_for('eliminar_solicitud', solicitud_id='') }}" + solicitudId;
         }
@@ -403,5 +405,51 @@
             document.getElementById('infoAdministradores').style.display = 'block'
         }
     })
+
+    // Paginación de proyectos
+    var proyectosPorPagina = 6;
+    var paginaActual = 1;
+    var proyectos = document.getElementsByClassName('proyecto-item');
+    function cambiarPagina(paso) {
+        paginaActual += paso;
+        mostrarProyectos();
+    }
+    function mostrarProyectos() {
+        var inicio = (paginaActual - 1) * proyectosPorPagina;
+        var fin = inicio + proyectosPorPagina;
+        for (var i = 0; i < proyectos.length; i++) {
+            if (i >= inicio && i < fin) {
+                proyectos[i].style.display = "";
+            } else {
+                proyectos[i].style.display = "none";
+            }
+        }
+        document.getElementById('anterior').disabled = paginaActual === 1;
+        document.getElementById('siguiente').disabled = fin >= proyectos.length;
+    }
+    mostrarProyectos();
+
+    // Paginación de solicitudes
+    var solicitudesPorPagina = 6;
+    var paginaActualSolicitudes = 1;
+    var solicitudes = document.querySelectorAll('#solicitudes-table-body tr');
+    function cambiarPaginaSolicitudes(paso) {
+        paginaActualSolicitudes += paso;
+        mostrarSolicitudes();
+    }
+    function mostrarSolicitudes() {
+        var inicio = (paginaActualSolicitudes - 1) * solicitudesPorPagina;
+        var fin = inicio + solicitudesPorPagina;
+        for (var i = 0; i < solicitudes.length; i++) {
+            if (i >= inicio && i < fin) {
+                solicitudes[i].style.display = "";
+            } else {
+                solicitudes[i].style.display = "none";
+            }
+        }
+        document.getElementById('anterior-solicitud').disabled = paginaActualSolicitudes === 1;
+        document.getElementById('siguiente-solicitud').disabled = fin >= solicitudes.length;
+    }
+    mostrarSolicitudes();
 </script>
 {% endblock %}
