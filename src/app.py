@@ -771,7 +771,50 @@ def crear_app():
 
 
         # Ruta para el formulario de asignar equipo
-        def enviar_notificacion(email, equipo, proyecto):
+        @app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
+        def asignar_equipo(proyecto_id):
+            if request.method == 'POST':
+                nombre_equipo = request.form.get("nombre_equipo")
+                cantidad_miembros = int(request.form.get("cantidad_miembros"))
+                miembros = []
+
+                for i in range(cantidad_miembros):
+                    miembro = request.form.get(f"miembros_{i}")
+                    miembros.append(miembro)
+
+                # Guarda la información en la base de datos (proyecto)
+                proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+                if proyecto:
+                    equipo = {
+                        "nombre": nombre_equipo,
+                        "miembros": miembros,
+                        "proyecto_id": proyecto_id,
+                        "proyecto_nombre": proyecto["nombre"]
+                    }
+                    con_bd.equipos.insert_one(equipo)
+                    proyecto["miembros_equipo"] = miembros
+                    con_bd.proyectos.update_one({"_id": ObjectId(proyecto_id)}, {"$set": proyecto})
+
+                    # Enviar notificación por correo a los miembros del equipo
+                    subject = f"Asignación al Proyecto: {proyecto['nombre']}"
+                    body = f"Has sido asignado al equipo '{nombre_equipo}' para el proyecto '{proyecto['nombre']}'."
+                    for miembro in miembros:
+                        enviar_notificacion(miembro, subject, body)
+
+                    flash('Equipo asignado y notificación enviada con éxito', 'success')
+                else:
+                    flash('Proyecto no encontrado.', 'danger')
+
+                return redirect(url_for('index'))
+
+            # Envia la lista de usuarios "Desarrollador" a la plantilla
+            usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
+            usuarios = list(usuarios_cursor)
+            proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+
+            return render_template('asignar_equipo.html', proyecto=proyecto, usuarios=usuarios, equipos=list(con_bd.equipos.find({"proyecto_id": proyecto_id})))
+        
+        def enviar_notificacion(email, subject, body):
             smtp_server = "smtp.gmail.com"
             smtp_port = 587
             sender_email = "cddta3211@gmail.com"
@@ -779,8 +822,8 @@ def crear_app():
             msg = MIMEMultipart()
             msg['From'] = sender_email
             msg['To'] = email
-            msg['Subject'] = "Asignación a Proyecto"
-            body = f"Has sido asignado al equipo {equipo} para el proyecto {proyecto}."
+            msg['Subject'] = subject
+            # body = f"Has sido asignado al equipo {equipo} para el proyecto: {proyecto} ."
             msg.attach(MIMEText(body, 'plain'))
             server = smtplib.SMTP(smtp_server, smtp_port)
             server.starttls()
@@ -788,42 +831,24 @@ def crear_app():
             server.send_message(msg)
             server.quit()
 
-        @app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
-        def asignar_equipo(proyecto_id):
-            proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+
+
+        @app.route('/notificar_equipo/<proyecto_id>', methods=['GET', 'POST'])
+        def notificar_equipo(proyecto_id):
+            if 'email' not in session:
+                return redirect(url_for('login'))
+
             if request.method == 'POST':
-                nombre_equipo = request.form.get("nombre_equipo")
-                cantidad_miembros = int(request.form.get("cantidad_miembros"))
-                miembros = []
+                equipo_id = request.form.get('equipo_id')
+                mensaje = request.form.get('mensaje')
+                flash(f'Notificación enviada al equipo {equipo_id} del proyecto {proyecto_id}', 'success')
 
-                for i in range(cantidad_miembros):
-                    miembro = request.form.get(f"miembros_{i}")
-                    miembros.append(miembro)
+            return render_template('notificar_equipo.html', proyecto_id=proyecto_id)
 
-                # Guarda el equipo en la base de datos
-                nuevo_equipo = {
-                    "nombre": nombre_equipo,
-                    "miembros": miembros,
-                    "proyecto_id": ObjectId(proyecto_id),
-                    "proyecto_nombre": proyecto["nombre"]
-                }
-                con_bd.equipos.insert_one(nuevo_equipo)
-
-                flash('Equipo asignado con éxito', 'success')
-                return redirect(url_for('asignar_equipo', proyecto_id=proyecto_id))
-
-            # Envia la lista de usuarios "Desarrollador" a la plantilla
-            usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
-            usuarios = list(usuarios_cursor)
-            equipos = list(con_bd.equipos.find({"proyecto_id": ObjectId(proyecto_id)}))
-
-            return render_template('asignar_equipo.html', proyecto=proyecto, usuarios=usuarios, equipos=equipos)
-
-        # Ruta para editar equipo
         @app.route('/editar_equipo/<equipo_id>', methods=['GET', 'POST'])
         def editar_equipo(equipo_id):
             equipo = con_bd.equipos.find_one({"_id": ObjectId(equipo_id)})
-            proyecto = con_bd.proyectos.find_one({"_id": equipo['proyecto_id']})
+            proyecto = con_bd.proyectos.find_one({"_id": ObjectId(equipo["proyecto_id"])})
 
             if request.method == 'POST':
                 nombre_equipo = request.form.get("nombre_equipo")
@@ -834,36 +859,21 @@ def crear_app():
                     miembro = request.form.get(f"miembros_{i}")
                     miembros.append(miembro)
 
-                # Actualiza el equipo en la base de datos
-                con_bd.equipos.update_one(
-                    {"_id": ObjectId(equipo_id)},
-                    {"$set": {
-                        "nombre": nombre_equipo,
-                        "miembros": miembros
-                    }}
-                )
+                con_bd.equipos.update_one({"_id": ObjectId(equipo_id)}, {"$set": {"nombre": nombre_equipo, "miembros": miembros}})
 
-                flash('Equipo actualizado con éxito', 'success')
-                return redirect(url_for('asignar_equipo', proyecto_id=equipo['proyecto_id']))
+                flash('Equipo editado con éxito', 'success')
+                return redirect(url_for('index'))
 
-            # Envia la lista de usuarios "Desarrollador" a la plantilla
             usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
             usuarios = list(usuarios_cursor)
-
             return render_template('editar_equipo.html', equipo=equipo, proyecto=proyecto, usuarios=usuarios)
 
-        # Ruta para eliminar equipo
         @app.route('/eliminar_equipo/<equipo_id>')
         def eliminar_equipo(equipo_id):
-            equipo = con_bd.equipos.find_one({"_id": ObjectId(equipo_id)})
-            if equipo:
-                con_bd.equipos.delete_one({"_id": ObjectId(equipo_id)})
-                flash('Equipo eliminado con éxito', 'success')
-            else:
-                flash('Equipo no encontrado', 'danger')
-            return redirect(url_for('asignar_equipo', proyecto_id=equipo['proyecto_id']))
-
-
+            con_bd.equipos.delete_one({"_id": ObjectId(equipo_id)})
+            flash('Equipo eliminado con éxito', 'success')
+            return redirect(url_for('index'))
+        
         
 
         return app

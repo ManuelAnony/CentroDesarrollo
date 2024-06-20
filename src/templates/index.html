@@ -19,19 +19,19 @@
     }
     .btn-custom {
         background-color: #4CAF50;
-        color: white;
+        color: black;
     }
     .btn-danger-custom {
         background-color: #DC3545;
-        color: white;
+        color: black;
     }
     .btn-primary-custom {
         background-color: #007BFF;
-        color: white;
+        color: black;
     }
     .btn-warning-custom {
         background-color: #FFC107;
-        color: black;
+        color: white;
     }
     .form-container {
         display: none;
@@ -134,8 +134,8 @@
                                     <td>{{ proyecto.fecha_finalizacion }}</td>
                                     <td>{{ proyecto.estado }}</td>
                                     <td>
-                                        <a href="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-primary-custom btn-sm">Asignar Equipo</a>
-                                        <a href="#" class="btn btn-danger-custom btn-sm" onclick="confirmarEliminarProyecto('{{ proyecto._id }}')">Eliminar</a>
+                                        <a href="{{ url_for('asignar_equipo', proyecto_id=proyecto._id) }}" class="btn btn-primary-custom btnRegistro">Asignar Equipo</a>
+                                        <a href="#" class="btn btn-danger-custom" onclick="confirmarEliminarProyecto('{{ proyecto._id }}')">Eliminar</a>
                                     </td>
                                 </tr>
                                 {% endfor %}

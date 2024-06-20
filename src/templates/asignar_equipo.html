@@ -12,6 +12,9 @@
                 <p>{{ proyecto.descripcion }}</p>
                 <p><strong>Fecha de Inicio:</strong> {{ proyecto.fecha_inicio }}</p>
                 <p><strong>Fecha de Finalización:</strong> {{ proyecto.fecha_finalizacion }}</p>
+                <div class="col-md-12">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary btnRegistro">Volver</a>
+                </div>
             </div>
         </div>
         <div class="col-md-6">
@@ -33,11 +36,6 @@
                     <button type="submit" class="btn btn-primary-custom">Asignar Equipo</button>
                 </form>
             </div>
-        </div>
-    </div>
-    <div class="row mt-3">
-        <div class="col-md-12">
-            <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver</a>
         </div>
     </div>
     <div class="row mt-3">
