@@ -773,6 +773,12 @@ def crear_app():
         # Ruta para el formulario de asignar equipo
         @app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
         def asignar_equipo(proyecto_id):
+            equipo = con_bd.equipos.find_one({"proyecto_id": proyecto_id})
+
+            if equipo:
+                flash('Ya existe un equipo asignado a este proyecto. Redirigiendo a la página de edición.', 'info')
+                return redirect(url_for('editar_equipo', equipo_id=equipo['_id']))
+
             if request.method == 'POST':
                 nombre_equipo = request.form.get("nombre_equipo")
                 cantidad_miembros = int(request.form.get("cantidad_miembros"))
@@ -813,6 +819,7 @@ def crear_app():
             proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
 
             return render_template('asignar_equipo.html', proyecto=proyecto, usuarios=usuarios, equipos=list(con_bd.equipos.find({"proyecto_id": proyecto_id})))
+
         
         def enviar_notificacion(email, subject, body):
             smtp_server = "smtp.gmail.com"
@@ -845,10 +852,32 @@ def crear_app():
 
             return render_template('notificar_equipo.html', proyecto_id=proyecto_id)
 
+        @app.route('/ver_equipos', methods=['GET'])
+        def ver_equipos():
+            page = int(request.args.get('page', 1))
+            per_page = 6
+            skip = (page - 1) * per_page
+
+            total_equipos = con_bd.equipos.count_documents({})
+            equipos = list(con_bd.equipos.find().skip(skip).limit(per_page))
+
+            next_page = page + 1 if (skip + per_page) < total_equipos else None
+            prev_page = page - 1 if page > 1 else None
+
+            return render_template('ver_equipos.html', equipos=equipos, next_page=next_page, prev_page=prev_page)
+
+
+        
+        
         @app.route('/editar_equipo/<equipo_id>', methods=['GET', 'POST'])
         def editar_equipo(equipo_id):
             equipo = con_bd.equipos.find_one({"_id": ObjectId(equipo_id)})
-            proyecto = con_bd.proyectos.find_one({"_id": ObjectId(equipo["proyecto_id"])})
+            if not equipo:
+                flash('Equipo no encontrado', 'danger')
+                return redirect(url_for('ver_equipos'))
+
+            proyecto_id = equipo.get("proyecto_id")
+            proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)}) if proyecto_id else None
 
             if request.method == 'POST':
                 nombre_equipo = request.form.get("nombre_equipo")
@@ -862,17 +891,19 @@ def crear_app():
                 con_bd.equipos.update_one({"_id": ObjectId(equipo_id)}, {"$set": {"nombre": nombre_equipo, "miembros": miembros}})
 
                 flash('Equipo editado con éxito', 'success')
-                return redirect(url_for('index'))
+                return redirect(url_for('ver_equipos'))
 
             usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
             usuarios = list(usuarios_cursor)
             return render_template('editar_equipo.html', equipo=equipo, proyecto=proyecto, usuarios=usuarios)
 
+
+
         @app.route('/eliminar_equipo/<equipo_id>')
         def eliminar_equipo(equipo_id):
             con_bd.equipos.delete_one({"_id": ObjectId(equipo_id)})
             flash('Equipo eliminado con éxito', 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('ver_equipos'))
         
         
 

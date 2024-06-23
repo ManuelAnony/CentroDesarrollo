@@ -1,17 +1,25 @@
 {% extends 'layout.html' %}
 
-{% block title %}Editar Equipo{% endblock %}
+{% block title %}Editar Equipo {% endblock %}
 
 {% block content %}
 <div class="container pt-5">
     <div class="row">
         <div class="col-md-6">
             <div class="card card-body">
-                <h1>Editar Equipo</h1>
+                <h1>Detalles del Equipo</h1>
                 <h3>Proyecto: {{ proyecto.nombre }}</h3>
                 <p>{{ proyecto.descripcion }}</p>
                 <p><strong>Fecha de Inicio:</strong> {{ proyecto.fecha_inicio }}</p>
                 <p><strong>Fecha de Finalización:</strong> {{ proyecto.fecha_finalizacion }}</p>
+                <div class="col-md-12">
+                    <a href="{{ url_for('ver_equipos') }}" class="btn btn-secondary btnRegistro">Volver</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card card-body">
+                <h1>Editar Equipo</h1>
                 <form method="POST" action="{{ url_for('editar_equipo', equipo_id=equipo._id) }}">
                     <div class="form-group">
                         <label for="nombre_equipo">Nombre del Equipo:</label>
@@ -22,13 +30,12 @@
                         <input type="number" id="cantidad_miembros" name="cantidad_miembros" class="form-control" value="{{ equipo.miembros|length }}" min="1" required>
                     </div>
                     <div id="miembrosSelects">
-                        <!-- Cuadros desplegables se generarán aquí -->
-                        {% for miembro in equipo.miembros %}
+                        {% for i in range(equipo.miembros|length) %}
                             <div class="form-group">
-                                <label>Miembro:</label>
-                                <select name="miembros_{{ loop.index0 }}" class="form-control" required>
+                                <label for="miembros_{{ i }}">Miembro {{ i + 1 }}:</label>
+                                <select name="miembros_{{ i }}" class="form-control" required>
                                     {% for usuario in usuarios %}
-                                        <option value="{{ usuario.email }}" {% if usuario.email == miembro %}selected{% endif %}>{{ usuario.email }}</option>
+                                        <option value="{{ usuario.email }}" {% if usuario.email == equipo.miembros[i] %}selected{% endif %}>{{ usuario.email }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -41,4 +48,41 @@
         </div>
     </div>
 </div>
+
+<script>
+    var cantidadMiembros = document.getElementById("cantidad_miembros");
+    var miembrosSelects = document.getElementById("miembrosSelects");
+
+    function actualizarMiembros() {
+        miembrosSelects.innerHTML = "";
+        var cantidad = parseInt(cantidadMiembros.value);
+
+        for (var i = 0; i < cantidad; i++) {
+            var div = document.createElement("div");
+            div.className = "form-group";
+
+            var label = document.createElement("label");
+            label.textContent = "Miembro " + (i + 1) + ":";
+            div.appendChild(label);
+
+            var select = document.createElement("select");
+            select.name = "miembros_" + i;
+            select.className = "form-control";
+            select.required = true;
+
+            {% for usuario in usuarios %}
+                var option = document.createElement("option");
+                option.value = "{{ usuario.email }}";
+                option.textContent = "{{ usuario.email }}";
+                select.appendChild(option);
+            {% endfor %}
+
+            div.appendChild(select);
+            miembrosSelects.appendChild(div);
+        }
+    }
+
+    cantidadMiembros.addEventListener("input", actualizarMiembros);
+    actualizarMiembros();
+</script>
 {% endblock %}

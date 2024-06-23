@@ -1,0 +1,57 @@
+{% extends 'layout.html' %}
+
+{% block title %}Equipos Creados {% endblock %}
+
+{% block content %}
+<div class="container pt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card card-body">
+                <h1>Equipos Creados</h1>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre del Equipo</th>
+                            <th>Miembros</th>
+                            <th>Proyecto Asignado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipo in equipos %}
+                            <tr>
+                                <td>{{ equipo.nombre }}</td>
+                                <td>
+                                    <ul>
+                                        {% for miembro in equipo.miembros %}
+                                            <li>{{ miembro }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td>{{ equipo.proyecto_nombre }}</td>
+                                <td>
+                                    <a href="{{ url_for('editar_equipo', equipo_id=equipo._id) }}" class="btn btn-warning btn-sm">Editar</a>
+                                    <a href="{{ url_for('eliminar_equipo', equipo_id=equipo._id) }}" class="btn btn-danger-custom" onclick="return confirm('¿Estás seguro de que deseas eliminar este equipo?');">Eliminar</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination justify-content-center">
+                        {% if prev_page %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('ver_equipos', page=prev_page) }}">Anterior</a></li>
+                        {% endif %}
+                        {% if next_page %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('ver_equipos', page=next_page) }}">Siguiente</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                <div class="col-md-12">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary btnRegistro">Volver</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

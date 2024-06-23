@@ -33,12 +33,15 @@
                         <!-- Cuadros desplegables se generarán aquí -->
                     </div>
                     <br>
-                    <button type="submit" class="btn btn-primary-custom">Asignar Equipo</button>
+                    <button type="submit" class="btn btn-primary">Asignar Equipo</button>
                 </form>
+                <div class="col-md-12 mt-3">
+                    <a href="{{ url_for('ver_equipos') }}" class="btn btn-primary btnRegistro">Ver Equipos Creados</a>
+                </div>
             </div>
         </div>
     </div>
-    <div class="row mt-3">
+    <!-- <div class="row mt-3">
         <div class="col-md-12">
             <div class="card card-body">
                 <h2>
@@ -47,32 +50,39 @@
                     </button>
                 </h2>
                 <div id="collapseEquipos" class="collapse">
-                    {% for equipo in equipos %}
-                        <div class="card mt-3">
-                            <div class="card-header">
-                                <h3>{{ equipo.nombre }}</h3>
-                                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#equipo{{ equipo._id }}" aria-expanded="false" aria-controls="equipo{{ equipo._id }}">
-                                    Ver Miembros
-                                </button>
-                                <a href="{{ url_for('editar_equipo', equipo_id=equipo._id) }}" class="btn btn-warning-custom btn-sm">Editar</a>
-                                <a href="{{ url_for('eliminar_equipo', equipo_id=equipo._id) }}" class="btn btn-danger-custom btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar este equipo?');">Eliminar</a>
-                            </div>
-                            <div id="equipo{{ equipo._id }}" class="collapse">
-                                <div class="card-body">
-                                    <ul>
-                                        {% for miembro in equipo.miembros %}
-                                            <li>{{ miembro }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                    <p><strong>Proyecto Asignado:</strong> {{ equipo.proyecto_nombre }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre del Equipo</th>
+                                <th>Miembros</th>
+                                <th>Proyecto Asignado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for equipo in equipos %}
+                                <tr>
+                                    <td>{{ equipo.nombre }}</td>
+                                    <td>
+                                        <ul>
+                                            {% for miembro in equipo.miembros %}
+                                                <li>{{ miembro }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td>{{ equipo.proyecto_nombre }}</td>
+                                    <td>
+                                        <a href="{{ url_for('editar_equipo', equipo_id=equipo._id) }}" class="btn btn-warning btn-sm">Editar</a>
+                                        <a href="{{ url_for('eliminar_equipo', equipo_id=equipo._id) }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar este equipo?');">Eliminar</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 </div>
 
 <script>
