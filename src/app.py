@@ -820,7 +820,6 @@ def crear_app():
 
             return render_template('asignar_equipo.html', proyecto=proyecto, usuarios=usuarios, equipos=list(con_bd.equipos.find({"proyecto_id": proyecto_id})))
 
-        
         def enviar_notificacion(email, subject, body):
             smtp_server = "smtp.gmail.com"
             smtp_port = 587
