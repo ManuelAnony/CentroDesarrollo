@@ -1,22 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio</title>
-    <meta name="description" content="" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/normalise.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/login.css') }}" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
-    <style>
-        .alert-floating {
-            position: fixed;
-            top: 20px;
-            left: 20px; /* Cambiar a la izquierda */
-            z-index: 1050;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/normalise.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/login.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 </head>
 <body>
     <!-- Bloque para mostrar mensajes flash -->
@@ -33,32 +23,31 @@
         {% endif %}
     {% endwith %}
 
+    <!-- Contenedor izquierdo -->
     <div class="container-left">
         <div class="centered-object">
             <div class="card2">
                 <form class="form" method="POST" action="{{ url_for('login') }}">
-                    <!--<p id="heading">Inicio de sesion</p>-->
+                    <p id="heading">Bienvenido</p>
                     <div class="field">
-                        <svg viewBox="0 0 16 16" fill="currentColor" height="16" width="16" xmlns="http://www.w3.org/2000/svg" class="input-icon">
-                            <path d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z"></path>
+                        <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" height="16" width="16">
+                            <path d="..."></path> <!-- Asegúrate de tener el SVG completo aquí -->
                         </svg>
                         <input type="email" class="input-field" placeholder="Email" autocomplete="off" id="email" name="email" />
                     </div>
                     <div class="field">
-                        <svg viewBox="0 0 16 16" fill="currentColor" height="16" width="16" xmlns="http://www.w3.org/2000/svg" class="input-icon">
-                            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"></path>
+                        <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" height="16" width="16">
+                            <path d="..."></path>
                         </svg>
                         <input type="password" id="password" name="password" class="input-field" placeholder="Password" />
                     </div>
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" id="showPassword" onclick="togglePassword()">
-                        <label class="form-check-label" for="showPassword">
-                            Mostrar contraseña
-                        </label>
+                        <label class="form-check-label" for="showPassword">Mostrar contraseña</label>
                     </div>
                     <div class="btn">
-                        <button class="button1" type="submit">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Iniciar sesion&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
-                        <button class="button2" type="button" onclick="location.href='{{ url_for('registroEmpresa') }}';">Resgistrate</button>
+                        <button class="button1" type="submit">Iniciar sesión</button>
+                        <button class="button2" type="button" onclick="location.href='{{ url_for('registroEmpresa') }}';">Regístrate</button>
                     </div>
                     <button class="button3" type="button" onclick="location.href='{{ url_for('restablecer_contraseña') }}';">Olvidé la contraseña</button>
                 </form>
@@ -66,28 +55,27 @@
         </div>
     </div>
 
-    <div class="container-right m-5">
-        <div class="textInformation col">
+    <!-- Contenedor derecho -->
+    <div class="container-right">
+        <div class="textInformation">
             <h1>Ingresa como usuario o crea tu cuenta</h1>
             <p>Accede a nuestros servicios de gestión de proyectos con contacto directo de programadores a empresa.</p>
         </div>
-        
-        <div class="animation position-relative top-100">
-            <div class="cube"><img src="{{url_for('static', filename='images/icons/b.png')}}" alt=""></div>
-            <div class="cube"><img src="{{url_for('static', filename='images/icons/c.png')}}" alt=""></div>
-            <div class="cube"><img src="{{url_for('static', filename='images/icons/h.png')}}" alt=""></div>
-            <div class="cube"><img src="{{url_for('static', filename='images/icons/j.png')}}" alt=""></div>
-            <div class="cube"><img src="{{url_for('static', filename='images/icons/m.png')}}" alt=""></div>
-            <div class="cube"><img src="{{url_for('static', filename='images/icons/p.png')}}" alt=""></div>
-            <div class="cube"><img src="{{url_for('static', filename='images/icons/s.png')}}" alt=""></div>
-        </div>
 
-        <!--<div class="text-center mt-5">
-            <button class="btn btn-primary" onclick="location.href='https://github.com/ManuelAnony/CentroDesarrollo/blob/main/User.txt';">Acceder a User.txt</button>
-        </div>-->
+        <!-- Sección animada -->
+        <div class="animation">
+            <div class="cube"><img src="{{url_for('static', filename='images/icons/b.png')}}" alt="Icono B"></div>
+            <div class="cube"><img src="{{url_for('static', filename='images/icons/c.png')}}" alt="Icono C"></div>
+            <div class="cube"><img src="{{url_for('static', filename='images/icons/h.png')}}" alt="Icono H"></div>
+            <div class="cube"><img src="{{url_for('static', filename='images/icons/j.png')}}" alt="Icono J"></div>
+            <div class="cube"><img src="{{url_for('static', filename='images/icons/m.png')}}" alt="Icono M"></div>
+            <div class="cube"><img src="{{url_for('static', filename='images/icons/p.png')}}" alt="Icono P"></div>
+            <div class="cube"><img src="{{url_for('static', filename='images/icons/s.png')}}" alt="Icono S"></div>
+        </div>
     </div>
 
     <script>
+        // Función para mostrar/ocultar contraseña
         function togglePassword() {
             var passwordField = document.getElementById("password");
             if (passwordField.type === "password") {
@@ -97,7 +85,7 @@
             }
         }
 
-        // Función para ocultar automáticamente las alertas después de 4 segundos
+        // Ocultar alertas automáticamente después de 4 segundos
         setTimeout(function() {
             var alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
@@ -106,6 +94,6 @@
             });
         }, 4000);
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>

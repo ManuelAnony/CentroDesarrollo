@@ -381,3 +381,123 @@ a {
   background-color: var(--fondo--botones)!important;
 
 }
+
+/* Ajustes para pantallas medianas y pequeñas */
+@media (max-width: 1200px) {
+  .textInformation h1 {
+    font-size: 50px;
+  }
+
+  .textInformation p {
+    font-size: 22px;
+  }
+
+  /* Ajuste del contenedor izquierdo */
+  .container-left {
+    padding: 50px;
+  }
+}
+
+@media (max-width: 992px) {
+  body, html {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .container-left, .container-right {
+    width: 100%;
+    height: auto;
+    flex: none;
+  }
+
+  .container-left {
+    padding: 40px;
+  }
+
+  .textInformation {
+    text-align: center;
+    padding: 10px;
+    width: 100%;
+  }
+
+  .textInformation h1 {
+    font-size: 40px;
+  }
+
+  .textInformation p {
+    font-size: 20px;
+  }
+
+  /* Ajustar animaciones a menor escala */
+  .animation {
+    bottom: 10px;
+  }
+
+  .cube {
+    width: 30px;
+    height: 30px;
+  }
+
+  .cube img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .textInformation h1 {
+    font-size: 30px;
+  }
+
+  .textInformation p {
+    font-size: 18px;
+  }
+
+  /* Ajuste del contenedor izquierdo */
+  .container-left {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Estilos para pantallas más pequeñas */
+  .textInformation h1 {
+    font-size: 25px;
+  }
+
+  .textInformation p {
+    font-size: 16px;
+  }
+
+  .container-left {
+    padding: 10px;
+  }
+
+  .animation {
+    bottom: 0;
+  }
+
+  .cube {
+    width: 25px;
+    height: 25px;
+  }
+
+  .cube img {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* Reducir el padding de los botones */
+  .form .btn button {
+    padding: 0.4em 0.8em;
+  }
+
+  .form {
+    padding-left: 2em;
+    padding-right: 2em;
+  }
+
+  .card2 {
+    margin: 0 auto;
+  }
+}
