@@ -98,6 +98,27 @@ def crear_app():
         server.send_message(msg)
         server.quit()
 
+    # Función para enviar enlace de establecimiento de contraseña para nuevos usuarios
+    def send_establish_password_email(to_email, establish_link):
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        sender_email = "cddta3211@gmail.com"
+        sender_password = "ypix xxef wbmi zqxl"
+
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = to_email
+        msg['Subject'] = "Establecer Contraseña"
+
+        body = f"Hola,\n\nHas sido registrado en nuestra plataforma. Usa el siguiente enlace para establecer tu contraseña: {establish_link}\n\nGracias."
+        msg.attach(MIMEText(body, 'plain'))
+
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+        
     @app.route('/restablecer_contraseña', methods=['GET', 'POST'])
     def restablecer_contraseña():
         if request.method == 'POST':
@@ -350,45 +371,74 @@ def crear_app():
 
         return render_template('verificacion.html')
 
-    ## Registro de equipo
+    # Ruta para registrar nuevos desarrolladores o administradores y enviarles el enlace para establecer contraseña
     @app.route('/registroEquipo', methods=['GET', 'POST'])
     def registroEquipo():
         if request.method == 'POST':
             nombreDesarrollador = request.form.get("nombreDesarrollador")
             email = request.form.get("email")        
-            password = request.form.get("password")
-            confirmar_password = request.form.get("confirmar_password")
             rol = request.form.get("rol")
             
             if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
                 flash("El correo electrónico no es válido.")
-                return redirect(url_for('index'))
+                return redirect(url_for('registroEquipo'))
 
-            if password != confirmar_password:
-                flash("Las contraseñas no coinciden.")
-                return redirect(url_for('index'))
-            
-            if not validar_contraseña(password):
-                flash("La contraseña debe contener al menos 8 caracteres, un número, una letra minúscula, una letra mayúscula y un carácter especial.")
-                return redirect(url_for('index'))
-            
             existe_usuario = con_bd.usuarios.find_one({"email": email})
             
             if existe_usuario:
-                return "El usuario ya existe. Por favor, inicia sesión o utiliza otro correo electrónico."
-            else:
-                hashed_password = generate_password_hash(password)
-                
-                nuevo_usuario = {
-                    "nombreDesarrollador": nombreDesarrollador,
-                    "email": email,
-                    "password": hashed_password,  # Almacena la contraseña cifrada
-                    "rol": rol
-                }
-                con_bd.usuarios.insert_one(nuevo_usuario) 
-                return redirect(url_for('index'))  
+                flash('El usuario ya existe. Por favor, utiliza otro correo electrónico.', 'danger')
+                return redirect(url_for('registroEquipo'))
+            
+            # Generar token para que el usuario establezca la contraseña
+            token = generate_verification_code()
+            establish_link = url_for('establecer_contraseña_token', token=token, _external=True)
+            
+            # Guardar el token en la base de datos
+            con_bd.tokens.insert_one({"email": email, "token": token})
+            
+            # Enviar el correo al desarrollador o administrador para que establezca la contraseña
+            send_establish_password_email(email, establish_link)
+
+            # Crear el usuario en la base de datos sin contraseña por ahora
+            nuevo_usuario = {
+                "nombreDesarrollador": nombreDesarrollador,
+                "email": email,
+                "rol": rol
+            }
+            con_bd.usuarios.insert_one(nuevo_usuario) 
+            
+            flash('Se ha enviado un enlace de establecimiento de contraseña al desarrollador/administrador.', 'success')
+            return redirect(url_for('index'))
 
         return render_template('index.html')
+    
+    # Ruta para establecer la contraseña usando el token
+    @app.route('/establecer_contraseña/<token>', methods=['GET', 'POST'])
+    def establecer_contraseña_token(token):
+        token_doc = con_bd.tokens.find_one({"token": token})
+        
+        if not token_doc:
+            flash('Token inválido o caducado.', 'danger')
+            return redirect(url_for('login'))
+
+        if request.method == 'POST':
+            new_password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+            
+            if new_password != confirm_password:
+                flash('Las contraseñas no coinciden.', 'danger')
+                return redirect(url_for('establecer_contraseña_token', token=token))
+            
+            hashed_password = generate_password_hash(new_password)
+            con_bd.usuarios.update_one({"email": token_doc['email']}, {"$set": {"password": hashed_password}})
+            con_bd.tokens.delete_one({"token": token})
+            flash('Tu contraseña ha sido restablecida exitosamente.', 'success')
+
+            # Redirigir al login después de cambiar la contraseña
+            return redirect(url_for('login'))
+
+        return render_template('establecer_contraseña.html', token=token)
+
 
     ## Funciones de obtener datos y enviar solicitudes
     def obtener_datos_empresa(email):
