@@ -403,13 +403,17 @@
     var proyectosPorPagina = 6;
     var paginaActual = 1;
     var proyectos = document.getElementsByClassName('proyecto-item');
+
     function cambiarPagina(paso) {
         paginaActual += paso;
         mostrarProyectos();
     }
+
     function mostrarProyectos() {
         var inicio = (paginaActual - 1) * proyectosPorPagina;
         var fin = inicio + proyectosPorPagina;
+
+        // Mostrar solo los proyectos de la página actual
         for (var i = 0; i < proyectos.length; i++) {
             if (i >= inicio && i < fin) {
                 proyectos[i].style.display = "";
@@ -417,10 +421,15 @@
                 proyectos[i].style.display = "none";
             }
         }
+
+        // Deshabilitar botones cuando llegamos al inicio o al final de las páginas
         document.getElementById('anterior').disabled = paginaActual === 1;
         document.getElementById('siguiente').disabled = fin >= proyectos.length;
     }
+
+    // Ejecutar la función de mostrar proyectos al cargar la página
     mostrarProyectos();
+
 
     // Paginación de solicitudes
     var solicitudesPorPagina = 6;

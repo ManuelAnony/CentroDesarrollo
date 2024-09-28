@@ -7,6 +7,7 @@ import smtplib
 import random
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from flask_mail import Mail, Message  # Importa Mail y Message desde Flask-Mail
 
 def crear_app():
     app = Flask(__name__, static_folder='static')
@@ -14,6 +15,8 @@ def crear_app():
     app.config['X_FRAME_OPTIONS'] = 'DENY'
     app.secret_key = 'u26kWaqy5XWNmdPS2%h%Lvf^uuBh47'
 
+    mail = Mail(app)  # Inicializa Flask-Mail
+    
     # Instancia de conexión a la base de datos
     con_bd = Conexion()
 
@@ -118,6 +121,14 @@ def crear_app():
         server.login(sender_email, sender_password)
         server.send_message(msg)
         server.quit()
+        
+    def enviar_correo(para, asunto, cuerpo):
+        msg = Message(asunto, recipients=[para])
+        msg.body = cuerpo
+        try:
+            mail.send(msg)
+        except Exception as e:
+            print(f"Error al enviar el correo: {e}")
         
     @app.route('/restablecer_contraseña', methods=['GET', 'POST'])
     def restablecer_contraseña():
@@ -371,31 +382,44 @@ def crear_app():
 
         return render_template('verificacion.html')
 
-    # Ruta para registrar nuevos desarrolladores o administradores y enviarles el enlace para establecer contraseña
     @app.route('/registroEquipo', methods=['GET', 'POST'])
     def registroEquipo():
+        # Obtener los datos necesarios para la página desde la base de datos
+        desarrolladores = list(con_bd.usuarios.find({"rol": "Desarrollador"}))
+        proyectos = list(con_bd.proyectos.find())
+        solicitudes = list(con_bd.solicitudes.find())
+        usuarios_empresa = list(con_bd.usuarios.find({"rol": "Empresa"}))
+        usuarios_admin = list(con_bd.usuarios.find({"rol": "Administrador"}))
+
         if request.method == 'POST':
             nombreDesarrollador = request.form.get("nombreDesarrollador")
             email = request.form.get("email")        
             rol = request.form.get("rol")
             
+            # Validar el formato del correo electrónico
             if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
                 flash("El correo electrónico no es válido.")
-                return redirect(url_for('registroEquipo'))
+                return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin)
 
+            # Validar que el correo sea institucional
+            if not email.endswith('@ucundinamarca.edu.co'):
+                flash("El correo electrónico debe ser institucional y terminar en @ucundinamarca.edu.co.", 'danger')
+                return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin)
+
+            # Verificar si el usuario ya existe
             existe_usuario = con_bd.usuarios.find_one({"email": email})
             
             if existe_usuario:
                 flash('El usuario ya existe. Por favor, utiliza otro correo electrónico.', 'danger')
-                return redirect(url_for('registroEquipo'))
-            
+                return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin)
+
             # Generar token para que el usuario establezca la contraseña
             token = generate_verification_code()
             establish_link = url_for('establecer_contraseña_token', token=token, _external=True)
-            
+
             # Guardar el token en la base de datos
             con_bd.tokens.insert_one({"email": email, "token": token})
-            
+
             # Enviar el correo al desarrollador o administrador para que establezca la contraseña
             send_establish_password_email(email, establish_link)
 
@@ -410,7 +434,9 @@ def crear_app():
             flash('Se ha enviado un enlace de establecimiento de contraseña al desarrollador/administrador.', 'success')
             return redirect(url_for('index'))
 
-        return render_template('index.html')
+        # Si es un GET, renderizamos la plantilla normalmente
+        return render_template('index.html', proyectos=proyectos, usuarios_empresa=usuarios_empresa, solicitudes=solicitudes, desarrolladores=desarrolladores, usuarios_admin=usuarios_admin)
+
     
     # Ruta para establecer la contraseña usando el token
     @app.route('/establecer_contraseña/<token>', methods=['GET', 'POST'])
@@ -633,9 +659,45 @@ def crear_app():
                 "proyecto_id": proyecto_id
             }
             con_bd.actividades.insert_one(nueva_actividad)
+            
 
             flash('Actividad creada con éxito', 'success')
             return redirect(url_for('proyecto'))
+
+    @app.route('/crear_actividad_1/<proyecto_id>', methods=['POST'])
+    def crear_actividad_1(proyecto_id):
+        if request.method == 'POST':
+            admin_email = request.form.get("admin_email")
+            nombre_actividad = request.form.get("nombre_actividad")
+            fecha_vencimiento = request.form.get("fecha_vencimiento")
+
+            nueva_actividad = {
+                "admin_email": admin_email,
+                "nombre": nombre_actividad,
+                "fecha_vencimiento": fecha_vencimiento,
+                "proyecto_id": ObjectId(proyecto_id)
+            }
+            con_bd.actividades.insert_one(nueva_actividad)
+
+            # Notificar a los miembros del equipo por correo
+            proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
+            if proyecto:
+                miembros_equipo = proyecto.get('miembros_equipo', [])
+                subject = f"Se ha creado una nueva actividad en el proyecto {proyecto['nombre']}"
+                body = f"Se ha añadido una nueva actividad: {nombre_actividad} con fecha de vencimiento {fecha_vencimiento}."
+
+                for miembro in miembros_equipo:
+                    usuario = con_bd.usuarios.find_one({"email": miembro})
+                    if usuario:
+                        enviar_notificacion(
+                            miembro,
+                            subject,
+                            f"Hola {usuario.get('nombre_desarrollador', 'Usuario')}, {body}"
+                        )
+
+            flash('Actividad creada con éxito', 'success')
+            return redirect(url_for('ver_proyecto', proyecto_id=proyecto_id))
+
 
     @app.route('/editar_estado/<proyecto_id>', methods=['GET', 'POST'])
     def editar_estado(proyecto_id):
@@ -707,23 +769,28 @@ def crear_app():
 
     @app.route('/asignar_equipo/<proyecto_id>', methods=['GET', 'POST'])
     def asignar_equipo(proyecto_id):
+        # Comprobar si ya existe un equipo asignado a este proyecto
         equipo = con_bd.equipos.find_one({"proyecto_id": proyecto_id})
 
         if equipo:
             flash('Ya existe un equipo asignado a este proyecto. Redirigiendo a la página de edición.', 'info')
             return redirect(url_for('editar_equipo', equipo_id=equipo['_id']))
 
+        # Si se envía el formulario, procesamos la asignación del equipo
         if request.method == 'POST':
             nombre_equipo = request.form.get("nombre_equipo")
             cantidad_miembros = int(request.form.get("cantidad_miembros"))
             miembros = []
 
+            # Extraer los miembros del formulario
             for i in range(cantidad_miembros):
                 miembro = request.form.get(f"miembros_{i}")
                 miembros.append(miembro)
 
+            # Obtener el proyecto correspondiente
             proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
             if proyecto:
+                # Crear el equipo y asignarlo al proyecto
                 equipo = {
                     "nombre": nombre_equipo,
                     "miembros": miembros,
@@ -731,13 +798,22 @@ def crear_app():
                     "proyecto_nombre": proyecto["nombre"]
                 }
                 con_bd.equipos.insert_one(equipo)
-                proyecto["miembros_equipo"] = miembros
-                con_bd.proyectos.update_one({"_id": ObjectId(proyecto_id)}, {"$set": proyecto})
 
+                # Actualizar la lista de miembros del proyecto
+                con_bd.proyectos.update_one({"_id": ObjectId(proyecto_id)}, {"$set": {"miembros_equipo": miembros}})
+
+                # Enviar notificación a los miembros asignados
                 subject = f"Asignación al Proyecto: {proyecto['nombre']}"
                 body = f"Has sido asignado al equipo '{nombre_equipo}' para el proyecto '{proyecto['nombre']}'."
+
                 for miembro in miembros:
-                    enviar_notificacion(miembro, subject, body)
+                    usuario = con_bd.usuarios.find_one({"email": miembro})
+                    if usuario:
+                        enviar_notificacion(
+                            miembro,
+                            subject,
+                            f"Hola {usuario.get('nombre_desarrollador', 'Usuario')}, has sido asignado al equipo '{nombre_equipo}' en el proyecto '{proyecto['nombre']}'."
+                        )
 
                 flash('Equipo asignado y notificación enviada con éxito', 'success')
             else:
@@ -745,28 +821,35 @@ def crear_app():
 
             return redirect(url_for('index'))
 
+        # Si es una solicitud GET, renderizar el formulario de asignación de equipo
         usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
         usuarios = list(usuarios_cursor)
         proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)})
 
-        return render_template('asignar_equipo.html', proyecto=proyecto, usuarios=usuarios, equipos=list(con_bd.equipos.find({"proyecto_id": proyecto_id})))
+        return render_template('asignar_equipo.html', proyecto=proyecto, usuarios=usuarios)
 
     def enviar_notificacion(email, subject, body):
         smtp_server = "smtp.gmail.com"
         smtp_port = 587
         sender_email = "cddta3211@gmail.com"
         sender_password = "ypix xxef wbmi zqxl"
+
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = email
         msg['Subject'] = subject
-
         msg.attach(MIMEText(body, 'plain'))
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.send_message(msg)
-        server.quit()
+
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+            server.quit()
+            print(f"Correo enviado exitosamente a {email}")
+        except Exception as e:
+            print(f"Error al enviar el correo a {email}: {e}")
+
 
     @app.route('/ver_equipos', methods=['GET'])
     def ver_equipos():
@@ -792,6 +875,9 @@ def crear_app():
         proyecto_id = equipo.get("proyecto_id")
         proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)}) if proyecto_id else None
 
+        # Guardar el estado anterior de los miembros del equipo
+        miembros_anteriores = set(equipo.get("miembros", []))
+
         if request.method == 'POST':
             nombre_equipo = request.form.get("nombre_equipo")
             cantidad_miembros = int(request.form.get("cantidad_miembros"))
@@ -801,7 +887,35 @@ def crear_app():
                 miembro = request.form.get(f"miembros_{i}")
                 miembros.append(miembro)
 
-            con_bd.equipos.update_one({"_id": ObjectId(equipo_id)}, {"$set": {"nombre": nombre_equipo, "miembros": miembros}})
+            # Convertir las listas a sets para poder identificar los cambios
+            miembros_actuales = set(miembros)
+
+            # Identificar los miembros añadidos y eliminados
+            nuevos_miembros = miembros_actuales - miembros_anteriores
+            miembros_eliminados = miembros_anteriores - miembros_actuales
+
+            # Actualizar el equipo en la base de datos
+            con_bd.equipos.update_one({"_id": ObjectId(equipo_id)}, {"$set": {"nombre": nombre_equipo, "miembros": list(miembros_actuales)}})
+
+            # Enviar correos a los nuevos miembros
+            for miembro in nuevos_miembros:
+                usuario = con_bd.usuarios.find_one({"email": miembro})
+                if usuario:
+                    enviar_correo(
+                        usuario['email'],
+                        'Fuiste asignado a un nuevo equipo',
+                        f'Hola {usuario.get("nombre_desarrollador", "Usuario")}, has sido asignado al equipo "{nombre_equipo}" en el proyecto "{proyecto.get("nombre", "sin nombre")}".'
+                    )
+
+            # Enviar correos a los miembros eliminados
+            for miembro in miembros_eliminados:
+                usuario = con_bd.usuarios.find_one({"email": miembro})
+                if usuario:
+                    enviar_correo(
+                        usuario['email'],
+                        'Fuiste removido de un equipo',
+                        f'Hola {usuario.get("nombre_desarrollador", "Usuario")}, has sido removido del equipo "{nombre_equipo}" en el proyecto "{proyecto.get("nombre", "sin nombre")}".'
+                    )
 
             flash('Equipo editado con éxito', 'success')
             return redirect(url_for('ver_equipos'))
@@ -809,6 +923,8 @@ def crear_app():
         usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
         usuarios = list(usuarios_cursor)
         return render_template('editar_equipo.html', equipo=equipo, proyecto=proyecto, usuarios=usuarios)
+
+
 
     @app.route('/eliminar_equipo/<equipo_id>')
     def eliminar_equipo(equipo_id):

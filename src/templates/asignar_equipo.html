@@ -90,33 +90,35 @@
     var miembrosSelects = document.getElementById("miembrosSelects");
 
     cantidadMiembros.addEventListener("input", function () {
-        miembrosSelects.innerHTML = "";  // Limpiar cuadros desplegables anteriores
+        miembrosSelects.innerHTML = "";  // Limpiar campos anteriores
         var cantidad = parseInt(cantidadMiembros.value);
-
+    
+        // Generar los selectores para cada miembro
         for (var i = 0; i < cantidad; i++) {
             var div = document.createElement("div");
             div.className = "form-group";
-
+    
             var label = document.createElement("label");
             label.textContent = "Miembro " + (i + 1) + ":";
             div.appendChild(label);
-
+    
             var select = document.createElement("select");
-            select.name = "miembros_" + i;  // Nombre único para cada cuadro desplegable
+            select.name = "miembros_" + i;  // Asegurarse de que el nombre sea único
             select.className = "form-control";
             select.required = true;
-
-            // Rellena las opciones con los usuarios registrados
+    
+            // Rellenar las opciones con los usuarios registrados
             {% for usuario in usuarios %}
                 var option = document.createElement("option");
                 option.value = "{{ usuario.email }}";
                 option.textContent = "{{ usuario.email }}";
                 select.appendChild(option);
             {% endfor %}
-
+    
             div.appendChild(select);
             miembrosSelects.appendChild(div);
         }
     });
+    
 </script>
 {% endblock %}

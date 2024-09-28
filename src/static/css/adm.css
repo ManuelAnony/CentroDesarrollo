@@ -74,6 +74,95 @@ input::placeholder {
     color: #ffffff !important;
 }
 .btn-danger-custom {
-    background-color: #DC3545  !important;
+    background-color: #9c3c46  !important;
     color: black  !important;
 }
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    position: relative;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.alert-dismissible .btn-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.75rem 1.25rem;
+}
+.alert-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    width: 300px;
+}
+/* Barra superior */
+.top-bar {
+    background-color: rgb(34, 36, 33);
+    color: white;
+    height: 120px; /* Aumentar la altura de la barra */
+    display: flex;
+    justify-content: center; /* Centra todo horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    padding: 0 20px;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Contenedor del logo y texto */
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Espaciado entre el logo y el texto */
+}
+
+/* Icono del logo */
+.logo-icon {
+    height: 100px; /* Aumentamos el tamaño del logo */
+    width: auto; /* Mantener proporciones */
+    border-radius: 50%; /* Hacer el logo circular */
+}
+
+/* Texto en la barra superior */
+.top-bar-text {
+    font-size: 2rem; /* Aumentamos el tamaño del texto */
+    font-weight: bold;
+}
+
+/* Ajustar el contenido para evitar que quede oculto por la barra */
+.container {
+    margin-top: 100px; /* Añadimos espacio para que el contenido no quede oculto */
+}
+

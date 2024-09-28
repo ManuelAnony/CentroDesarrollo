@@ -27,6 +27,15 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 <body>
+
+    <!-- Barra negra superior -->
+    <div class="top-bar">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-icon">
+            <div class="top-bar-text">CDDT</div>
+        </div>
+    </div>
+
     <!-- Bloque para mostrar mensajes flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
