@@ -13,6 +13,7 @@ setuptools==69.0.3
 Werkzeug==3.0.1
 gunicorn
 Flask-WTF
+Flask-Mail
 Flask-Limiter
 validators
 python-dotenv
