@@ -17,25 +17,33 @@
                 </div>
             </div>
         </div>
+
         <div class="col-md-6">
             <div class="card card-body">
                 <h1>Editar Equipo</h1>
                 <form method="POST" action="{{ url_for('editar_equipo', equipo_id=equipo._id) }}">
                     <div class="form-group">
                         <label for="nombre_equipo">Nombre del Equipo:</label>
-                        <input type="text" id="nombre_equipo" name="nombre_equipo" class="form-control" value="{{ equipo.nombre }}" required>
+                        <input type="text" id="nombre_equipo" name="nombre_equipo" class="form-control" 
+                               value="{{ equipo.nombre }}" required>
                     </div>
+
                     <div class="form-group">
                         <label for="cantidad_miembros">Cantidad de Miembros:</label>
-                        <input type="number" id="cantidad_miembros" name="cantidad_miembros" class="form-control" value="{{ equipo.miembros|length }}" min="1" required>
+                        <input type="number" id="cantidad_miembros" name="cantidad_miembros" 
+                               class="form-control" value="{{ equipo.miembros | length }}" min="1" required>
                     </div>
+
                     <div id="miembrosSelects">
                         {% for i in range(equipo.miembros|length) %}
                             <div class="form-group">
                                 <label for="miembros_{{ i }}">Miembro {{ i + 1 }}:</label>
                                 <select name="miembros_{{ i }}" class="form-control" required>
                                     {% for usuario in usuarios %}
-                                        <option value="{{ usuario.email }}" {% if usuario.email == equipo.miembros[i] %}selected{% endif %}>{{ usuario.email }}</option>
+                                        <option value="{{ usuario.email }}" 
+                                            {% if usuario.email == equipo.miembros[i] %}selected{% endif %}>
+                                            {{ usuario.email }}
+                                        </option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -53,30 +61,43 @@
     var cantidadMiembros = document.getElementById("cantidad_miembros");
     var miembrosSelects = document.getElementById("miembrosSelects");
 
+    var usuariosDisponibles = {{ usuarios | tojson }};
+    var miembrosActuales = {{ equipo.miembros | tojson }};
+    
+    console.log("Usuarios disponibles:", usuariosDisponibles);
+    console.log("Miembros actuales:", miembrosActuales);
+
     function actualizarMiembros() {
         miembrosSelects.innerHTML = "";
         var cantidad = parseInt(cantidadMiembros.value);
-
+    
         for (var i = 0; i < cantidad; i++) {
             var div = document.createElement("div");
             div.className = "form-group";
-
+    
             var label = document.createElement("label");
             label.textContent = "Miembro " + (i + 1) + ":";
             div.appendChild(label);
-
+    
             var select = document.createElement("select");
             select.name = "miembros_" + i;
             select.className = "form-control";
             select.required = true;
-
+    
+            // Añadir opciones con selección automática
             {% for usuario in usuarios %}
                 var option = document.createElement("option");
                 option.value = "{{ usuario.email }}";
                 option.textContent = "{{ usuario.email }}";
+    
+                // Comparar con los miembros actuales para marcar como seleccionado
+                if ({{ equipo.miembros|tojson }}.includes(option.value)) {
+                    option.selected = true;
+                }
+    
                 select.appendChild(option);
             {% endfor %}
-
+    
             div.appendChild(select);
             miembrosSelects.appendChild(div);
         }

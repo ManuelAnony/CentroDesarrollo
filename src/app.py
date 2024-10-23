@@ -122,13 +122,7 @@ def crear_app():
         server.send_message(msg)
         server.quit()
         
-    def enviar_correo(para, asunto, cuerpo):
-        msg = Message(asunto, recipients=[para])
-        msg.body = cuerpo
-        try:
-            mail.send(msg)
-        except Exception as e:
-            print(f"Error al enviar el correo: {e}")
+    
         
     @app.route('/restablecer_contraseña', methods=['GET', 'POST'])
     def restablecer_contraseña():
@@ -600,10 +594,17 @@ def crear_app():
     # Ruta para cerrar sesión
     @app.route('/logout')
     def logout():
-        session.pop('email', None)
-        flash('Sesión cerrada', 'info')
+        # Limpiar completamente todos los datos de la sesión.
+        session.clear()  # Elimina toda la sesión.
+        flash('Sesión cerrada correctamente', 'info')
         return redirect(url_for('login'))
-
+    @app.before_request
+    def verificar_sesion():
+        rutas_protegidas = ['proyecto', 'ver_equipos', 'dashcompany','editar_equipo']
+        if 'email' not in session and request.endpoint in rutas_protegidas:
+            flash('Debes iniciar sesión para acceder a esta página.', 'warning')
+            return redirect(url_for('login'))
+        
     @app.route('/')
     @app.route('/index')
     @app.route('/home')
@@ -867,6 +868,7 @@ def crear_app():
 
     @app.route('/editar_equipo/<equipo_id>', methods=['GET', 'POST'])
     def editar_equipo(equipo_id):
+        # Cargar equipo desde la base de datos
         equipo = con_bd.equipos.find_one({"_id": ObjectId(equipo_id)})
         if not equipo:
             flash('Equipo no encontrado', 'danger')
@@ -875,56 +877,100 @@ def crear_app():
         proyecto_id = equipo.get("proyecto_id")
         proyecto = con_bd.proyectos.find_one({"_id": ObjectId(proyecto_id)}) if proyecto_id else None
 
-        # Guardar el estado anterior de los miembros del equipo
+        # Imprimir equipo y proyecto para depuración
+        print("Equipo cargado desde la base de datos:", equipo)
+        print("Proyecto asociado:", proyecto)
+
         miembros_anteriores = set(equipo.get("miembros", []))
 
         if request.method == 'POST':
+            # Obtener datos del formulario
             nombre_equipo = request.form.get("nombre_equipo")
-            cantidad_miembros = int(request.form.get("cantidad_miembros"))
-            miembros = []
+            cantidad_miembros = int(request.form.get("cantidad_miembros", 0))
+            miembros = [request.form.get(f"miembros_{i}") for i in range(cantidad_miembros)]
 
-            for i in range(cantidad_miembros):
-                miembro = request.form.get(f"miembros_{i}")
-                miembros.append(miembro)
-
-            # Convertir las listas a sets para poder identificar los cambios
+            # Identificar miembros nuevos y eliminados
             miembros_actuales = set(miembros)
-
-            # Identificar los miembros añadidos y eliminados
             nuevos_miembros = miembros_actuales - miembros_anteriores
             miembros_eliminados = miembros_anteriores - miembros_actuales
 
-            # Actualizar el equipo en la base de datos
-            con_bd.equipos.update_one({"_id": ObjectId(equipo_id)}, {"$set": {"nombre": nombre_equipo, "miembros": list(miembros_actuales)}})
+            # Actualizar equipo en la base de datos
+            con_bd.equipos.update_one(
+                {"_id": ObjectId(equipo_id)},
+                {"$set": {"nombre": nombre_equipo, "miembros": list(miembros_actuales)}}
+            )
 
-            # Enviar correos a los nuevos miembros
-            for miembro in nuevos_miembros:
-                usuario = con_bd.usuarios.find_one({"email": miembro})
-                if usuario:
-                    enviar_correo(
-                        usuario['email'],
-                        'Fuiste asignado a un nuevo equipo',
-                        f'Hola {usuario.get("nombre_desarrollador", "Usuario")}, has sido asignado al equipo "{nombre_equipo}" en el proyecto "{proyecto.get("nombre", "sin nombre")}".'
-                    )
+            # Solo enviar correos si se encontró un proyecto asociado
+            if proyecto:
+                for miembro in nuevos_miembros:
+                    usuario = con_bd.usuarios.find_one({"email": miembro})
+                    if usuario:
+                        enviar_correo(
+                            usuario['email'],
+                            f'Asignación al proyecto: {proyecto.get("nombre", "Proyecto sin nombre")}',
+                            f'Hola {usuario.get("nombreDesarrollador", "Usuario")}, '
+                            f'has sido asignado al equipo "{nombre_equipo}" '
+                            f'en el proyecto "{proyecto.get("nombre", "sin nombre")}".'
+                        )
 
-            # Enviar correos a los miembros eliminados
-            for miembro in miembros_eliminados:
-                usuario = con_bd.usuarios.find_one({"email": miembro})
-                if usuario:
-                    enviar_correo(
-                        usuario['email'],
-                        'Fuiste removido de un equipo',
-                        f'Hola {usuario.get("nombre_desarrollador", "Usuario")}, has sido removido del equipo "{nombre_equipo}" en el proyecto "{proyecto.get("nombre", "sin nombre")}".'
-                    )
+                for miembro in miembros_eliminados:
+                    usuario = con_bd.usuarios.find_one({"email": miembro})
+                    if usuario:
+                        enviar_correo(
+                            usuario['email'],
+                            f'Removido del proyecto: {proyecto.get("nombre", "Proyecto sin nombre")}',
+                            f'Hola {usuario.get("nombreDesarrollador", "Usuario")}, '
+                            f'has sido removido del equipo "{nombre_equipo}" '
+                            f'en el proyecto "{proyecto.get("nombre", "sin nombre")}".'
+                        )
+            else:
+                print("No se encontró un proyecto asociado. No se enviaron correos.")
 
             flash('Equipo editado con éxito', 'success')
             return redirect(url_for('ver_equipos'))
 
-        usuarios_cursor = con_bd.usuarios.find({"rol": "Desarrollador"})
-        usuarios = list(usuarios_cursor)
-        return render_template('editar_equipo.html', equipo=equipo, proyecto=proyecto, usuarios=usuarios)
+        # Convertir ObjectId a str en usuarios para evitar problemas de serialización
+        usuarios = list(con_bd.usuarios.find({"rol": "Desarrollador"}))
+        for usuario in usuarios:
+            usuario['_id'] = str(usuario['_id'])
 
+        equipo['_id'] = str(equipo['_id'])
 
+        return render_template(
+            'editar_equipo.html',
+            equipo=equipo,
+            proyecto=proyecto,
+            usuarios=usuarios
+        )
+
+    def enviar_correo(email, subject, body):
+            smtp_server = "smtp.gmail.com"
+            smtp_port = 587  # Asegúrate de que este es el puerto correcto
+            sender_email = "cddta3211@gmail.com"
+            sender_password = "ypix xxef wbmi zqxl"  # Verifica que esta sea la contraseña correcta
+
+            msg = MIMEMultipart()
+            msg['From'] = sender_email
+            msg['To'] = email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(body, 'plain'))
+
+            try:
+                print("Estableciendo conexión con el servidor SMTP...")
+                server = smtplib.SMTP(smtp_server, smtp_port)
+                server.starttls()
+                print("Iniciando sesión en el servidor SMTP...")
+                server.login(sender_email, sender_password)
+                print("Enviando mensaje...")
+                server.send_message(msg)
+                server.quit()
+                print(f"Correo enviado exitosamente a {email}")
+            except smtplib.SMTPAuthenticationError:
+                print("Error de autenticación: verifica tu correo y contraseña.")
+            except smtplib.SMTPConnectError:
+                print("No se pudo conectar al servidor SMTP. Verifica la conexión de red.")
+            except smtplib.SMTPException as e:
+                print(f"Ocurrió un error durante el envío del correo: {e}")
 
     @app.route('/eliminar_equipo/<equipo_id>')
     def eliminar_equipo(equipo_id):
