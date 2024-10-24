@@ -73,7 +73,7 @@
             </div>
             <div class="col-md-8">
                 <div class="card card-body">
-                    <h1>Actividades del Proyecto</h1>
+                    
                     
                     <a href="#" id="linkCrearActividad" class="btn btn-primary mt-3">Crear Nueva Actividad</a>
                     <div class="formulario-crear-actividad mt-4">
@@ -88,7 +88,10 @@
                             <button type="submit" class="btn btn-success mt-3">Crear Actividad</button>
                         </form>
                     </div>
-
+                    <br>
+                    <hr>
+                    <h1>Actividades del Proyecto</h1>
+                    <br>
                     <div>
                         <ul>
                             {% for actividad in actividades %}
@@ -119,6 +122,62 @@
             $("#linkCrearActividad").click(function(e) {
                 e.preventDefault();
                 $(".formulario-crear-actividad").slideToggle();
+            });
+        });
+        $(document).ready(function() {
+            function updateStatusColor(element) {
+                var status = element.val();
+                element.removeClass("status-sin-iniciar status-en-proceso status-finalizado");
+                if (status == "Sin Iniciar") {
+                    element.addClass("status-sin-iniciar");
+                } else if (status == "En Proceso") {
+                    element.addClass("status-en-proceso");
+                } else if (status == "Finalizado") {
+                    element.addClass("status-finalizado");
+                }
+            }
+
+            $(".update-activity-status").each(function() {
+                updateStatusColor($(this));
+            });
+
+            $(".update-activity-status").change(function() {
+                var actividadId = $(this).data("actividad-id");
+                var nuevoEstado = $(this).val();
+                var observaciones = $(this).closest(".activity-item").find(".observaciones").val();
+                updateStatusColor($(this));
+
+                $.ajax({
+                    url: "/actualizar_actividad",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ actividad_id: actividadId, nuevo_estado: nuevoEstado, observaciones: observaciones }),
+                    success: function(response) {
+                        alert("Actividad actualizada.");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error al actualizar la actividad:", error);
+                    }
+                });
+            });
+
+            $(".observaciones").change(function() {
+                var actividadId = $(this).data("actividad-id");
+                var nuevoEstado = $(this).closest(".activity-item").find(".update-activity-status").val();
+                var observaciones = $(this).val();
+
+                $.ajax({
+                    url: "/actualizar_actividad",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ actividad_id: actividadId, nuevo_estado: nuevoEstado, observaciones: observaciones }),
+                    success: function(response) {
+                        alert("Observaciones actualizadas.");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error al actualizar las observaciones:", error);
+                    }
+                });
             });
         });
     </script>

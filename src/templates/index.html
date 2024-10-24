@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename = 'css/normalise.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename = 'css/login.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename = 'css/dashboard.css') }}" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
   <style>
     .alert-floating {
         position: fixed;
@@ -114,7 +117,7 @@
                             <option value="En Proceso">En Proceso</option>
                             <option value="Completado">Completado</option>
                         </select>
-                        <table class="table table-striped mt-3">
+                        <table id="proyectosTable" class="table table-striped mt-3">
                             <thead>
                                 <tr>
                                     <th>Nombre del Proyecto</th>
@@ -125,7 +128,7 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="proyectos-table-body">
+                            <tbody>
                                 {% for proyecto in proyectos %}
                                 <tr class="proyecto-item" data-estado="{{ proyecto.estado }}">
                                     <td>{{ proyecto.nombre }}</td>
@@ -141,6 +144,7 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                        
                         <div class="d-flex justify-content-between">
                         <button id="anterior" class="btn btn-primary-custom" onclick="cambiarPagina(-1)">Anterior</button>
                         <button id="siguiente" class="btn btn-primary-custom" onclick="cambiarPagina(1)">Siguiente</button>
@@ -161,38 +165,40 @@
                         <tr>
                             <th>Nombre de la Solicitud</th>
                             <th>Descripción</th>
-                            <th>Fecha</th>
-                            <th>Empresa</th>
-                            <th>Estado</th>
-                            <th>Opciones</th>
+                            <th>Estado Actual</th>
+                            <th>Comentarios</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="solicitudes-table-body">
-                        {% if solicitudes %}
-                            {% for solicitud in solicitudes %}
-                                <tr>
-                                    <td>{{ solicitud['nombre_solicitud'] }}</td>
-                                    <td>{{ solicitud['descripcion_solicitud'] }}</td>
-                                    <td>{{ solicitud['fecha'] }}</td>
-                                    <td>{{ solicitud['email'] }}</td>
-                                    <td>
-                                        <select class="form-select" onchange="cambiarEstadoSolicitud('{{ solicitud._id }}', this.value)">
-                                            <option value="Pendiente" {% if solicitud['estado'] == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                            <option value="Aprobado" {% if solicitud['estado'] == 'Aprobado' %}selected{% endif %}>Aprobado</option>
-                                            <option value="Rechazado" {% if solicitud['estado'] == 'Rechazado' %}selected{% endif %}>Rechazado</option>
-                                            <option value="En Estudio" {% if solicitud['estado'] == 'En Estudio' %}selected{% endif %}>En Estudio</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <a href="#" class="btn btn-danger-custom btn-sm" onclick="confirmarEliminarSolicitud('{{ solicitud._id }}')">Eliminar</a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="6">No hay solicitudes disponibles.</td>
-                            </tr>
-                        {% endif %}
+                    <tbody>
+                        {% for solicitud in solicitudes %}
+                        <tr>
+                            <td>{{ solicitud['nombre_solicitud'] }}</td>
+                            <td>{{ solicitud['descripcion_solicitud'] }}</td>
+                            <td>{{ solicitud['estado'] }}</td>
+                            <td>
+                                <ul>
+                                    {% for actualizacion in solicitud['actualizaciones'] %}
+                                    <li>{{ actualizacion['fecha'] }} - {{ actualizacion['estado'] }}: {{ actualizacion['comentario'] }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('actualizar_solicitud', solicitud_id=solicitud['_id']) }}" method="POST">
+                                    <select name="estado" class="form-select mb-2" required>
+                                        <option value="Pendiente" {% if solicitud['estado'] == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                        <option value="En proceso" {% if solicitud['estado'] == 'En proceso' %}selected{% endif %}>En proceso</option>
+                                        <option value="Completada" {% if solicitud['estado'] == 'Completada' %}selected{% endif %}>Completada</option>
+                                        <option value="Rechazada" {% if solicitud['estado'] == 'Rechazada' %}selected{% endif %}>Rechazada</option>
+                                    </select>
+                                    <textarea name="comentario" class="form-control mb-2" placeholder="Agregar comentario" required></textarea>
+                                    <input type="date" name="fecha_actualizacion" class="form-control mb-2" required>
+                                    <button type="submit" class="btn btn-primary-custom btnRegistro">Actualizar</button>
+                                    <a href="#" class="btn btn-danger-custom btn-sm" onclick="confirmarEliminarSolicitud('{{ solicitud._id }}')">Eliminar</a>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
                 <div class="d-flex justify-content-between">
@@ -377,6 +383,9 @@
             window.location.href = "{{ url_for('eliminar_proyecto', proyecto_id='') }}" + proyectoId;
         }
     }
+    // Filtros y orenamiento
+
+
     function filtrarProyectos() {
         var filtro = document.getElementById("estado_filtro").value;
         var items = document.getElementsByClassName("proyecto-item");
@@ -388,6 +397,8 @@
             }
         }
     }
+
+    // fin filtros y ordenamiento
     document.getElementById('seleccionarInfo').addEventListener('change', function () {
         var seleccion = document.getElementById('seleccionarInfo').value
         if (seleccion === 'infoDesarrolladores') {

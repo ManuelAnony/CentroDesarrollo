@@ -238,6 +238,21 @@ def crear_app():
         
         return redirect(url_for('index'))
 
+    @app.route('/eliminar_solicitud_empresa/<solicitud_id>', methods=['POST'])
+    def eliminar_solicitud_empresa(solicitud_id):
+        if 'email' not in session:
+            return redirect(url_for('login'))
+        
+        solicitud = con_bd.solicitudes.find_one({"_id": ObjectId(solicitud_id)})
+        if solicitud:
+            con_bd.solicitudes.delete_one({"_id": ObjectId(solicitud_id)})
+            flash('Solicitud eliminada con éxito', 'success')
+        else:
+            flash('Solicitud no encontrada', 'danger')
+        
+        return redirect(url_for('dashcompany'))
+
+    
     @app.route('/eliminar_proyecto/<proyecto_id>')
     def eliminar_proyecto(proyecto_id):
         if 'email' not in session:
@@ -523,6 +538,86 @@ def crear_app():
             print(f"Error al procesar la solicitud: {e}")
             flash('Error al enviar la solicitud', 'danger')
             return redirect(url_for('dashcompany'))
+
+    @app.route('/actualizar_solicitud/<solicitud_id>', methods=['POST'])
+    def actualizar_solicitud(solicitud_id):
+        if 'email' not in session:
+            return redirect(url_for('login'))
+
+        solicitud = con_bd.solicitudes.find_one({"_id": ObjectId(solicitud_id)})
+        if not solicitud:
+            flash('Solicitud no encontrada.', 'danger')
+            return redirect(url_for('dashcompany'))
+
+        nuevo_estado = request.form.get("estado")
+        comentario = request.form.get("comentario")
+        fecha_actualizacion = request.form.get("fecha_actualizacion")
+
+        if not nuevo_estado or not comentario:
+            flash('Por favor, ingresa un estado y un comentario.', 'danger')
+            return redirect(url_for('dashcompany'))
+
+        # Agregar la actualización a la lista de actualizaciones
+        nueva_actualizacion = {
+            "estado": nuevo_estado,
+            "comentario": comentario,
+            "fecha": fecha_actualizacion
+        }
+
+        con_bd.solicitudes.update_one(
+            {"_id": ObjectId(solicitud_id)},
+            {"$push": {"actualizaciones": nueva_actualizacion}, "$set": {"estado": nuevo_estado}}
+        )
+
+        # Enviar notificación por correo
+        enviar_correo_actualizacion(
+            solicitud['email'],
+            solicitud['nombre_solicitud'],
+            nuevo_estado,
+            comentario,
+            fecha_actualizacion
+        )
+
+        flash('Solicitud actualizada correctamente y notificación enviada.', 'success')
+        return redirect(url_for('dashcompany'))
+
+
+
+    def enviar_correo_actualizacion(email, nombre_solicitud, estado, comentario, fecha):
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        sender_email = "cddta3211@gmail.com"
+        sender_password = "ypix xxef wbmi zqxl"  # Asegúrate de que esta es la contraseña correcta
+
+        # Contenido del correo
+        subject = f"Actualización de solicitud: {nombre_solicitud}"
+        body = (
+            f"Estimado usuario,\n\n"
+            f"Se ha realizado una nueva actualización en la solicitud '{nombre_solicitud}'.\n"
+            f"Estado: {estado}\n"
+            f"Comentario: {comentario}\n"
+            f"Fecha de actualización: {fecha}\n\n"
+            f"Gracias por utilizar nuestra plataforma.\n\n"
+            f"Saludos,\nEquipo CDDT"
+        )
+
+        # Configuración del mensaje
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        try:
+            # Envío del correo
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+            server.quit()
+            print(f"Correo enviado exitosamente a {email}")
+        except Exception as e:
+            print(f"Error al enviar el correo a {email}: {e}")
 
     def obtener_solicitudes(email):
         try:
