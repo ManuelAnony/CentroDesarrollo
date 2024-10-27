@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from config import *
+from datetime import datetime
 import re
 import smtplib
 import random
@@ -148,22 +149,36 @@ def crear_app():
         if not token_doc:
             flash('Token inválido o caducado.', 'danger')
             return redirect(url_for('login'))
-        
+
         if request.method == 'POST':
             new_password = request.form.get('password')
             confirm_password = request.form.get('confirmar_password')
-            
+
+            # Verificación de coincidencia de contraseñas
             if new_password != confirm_password:
                 flash('Las contraseñas no coinciden.', 'danger')
                 return redirect(url_for('resetear_con_token', token=token))
-            
+
+            # Validación de la seguridad de la contraseña
+            if not validar_contraseña(new_password):
+                flash(
+                    'La contraseña debe tener al menos 8 caracteres, '
+                    'incluir un número, una letra minúscula, '
+                    'una letra mayúscula y un carácter especial.', 
+                    'danger'
+                )
+                return redirect(url_for('resetear_con_token', token=token))
+
+            # Generar el hash de la nueva contraseña y actualizarla en la BD
             hashed_password = generate_password_hash(new_password)
             con_bd.usuarios.update_one({"email": token_doc['email']}, {"$set": {"password": hashed_password}})
             con_bd.tokens.delete_one({"token": token})
+
             flash('Tu contraseña ha sido restablecida exitosamente.', 'success')
             return redirect(url_for('login'))
-        
+
         return render_template('resetear_con_token.html', token=token)
+
 
     ## Verificación de email
     def send_verification_email(to_email, verification_code):
@@ -315,15 +330,23 @@ def crear_app():
 
     ## Validación de contraseñas seguras
     def validar_contraseña(password):
+        """
+        Valida si la contraseña cumple con los siguientes criterios:
+        - Al menos 8 caracteres
+        - Al menos una letra mayúscula
+        - Al menos una letra minúscula
+        - Al menos un número
+        - Al menos un carácter especial
+        """
         if len(password) < 8:
             return False
-        if not re.search(r"\d", password):
+        if not re.search(r"[A-Z]", password):  # Al menos una letra mayúscula
             return False
-        if not re.search(r"[a-z]", password):
+        if not re.search(r"[a-z]", password):  # Al menos una letra minúscula
             return False
-        if not re.search(r"[A-Z]", password):
+        if not re.search(r"\d", password):     # Al menos un número
             return False
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):  # Al menos un carácter especial
             return False
         return True
 
@@ -542,22 +565,21 @@ def crear_app():
     @app.route('/actualizar_solicitud/<solicitud_id>', methods=['POST'])
     def actualizar_solicitud(solicitud_id):
         if 'email' not in session:
-            return redirect(url_for('login'))
+            return jsonify({'success': False, 'error': 'No autorizado'}), 401
 
         solicitud = con_bd.solicitudes.find_one({"_id": ObjectId(solicitud_id)})
         if not solicitud:
-            flash('Solicitud no encontrada.', 'danger')
-            return redirect(url_for('dashcompany'))
+            return jsonify({'success': False, 'error': 'Solicitud no encontrada'}), 404
 
-        nuevo_estado = request.form.get("estado")
-        comentario = request.form.get("comentario")
-        fecha_actualizacion = request.form.get("fecha_actualizacion")
+        data = request.json
+        nuevo_estado = data.get('estado')
+        comentario = data.get('comentario')
 
         if not nuevo_estado or not comentario:
-            flash('Por favor, ingresa un estado y un comentario.', 'danger')
-            return redirect(url_for('dashcompany'))
+            return jsonify({'success': False, 'error': 'Estado y comentario son requeridos'}), 400
 
-        # Agregar la actualización a la lista de actualizaciones
+        fecha_actualizacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
         nueva_actualizacion = {
             "estado": nuevo_estado,
             "comentario": comentario,
@@ -569,7 +591,6 @@ def crear_app():
             {"$push": {"actualizaciones": nueva_actualizacion}, "$set": {"estado": nuevo_estado}}
         )
 
-        # Enviar notificación por correo
         enviar_correo_actualizacion(
             solicitud['email'],
             solicitud['nombre_solicitud'],
@@ -578,8 +599,7 @@ def crear_app():
             fecha_actualizacion
         )
 
-        flash('Solicitud actualizada correctamente y notificación enviada.', 'success')
-        return redirect(url_for('dashcompany'))
+        return jsonify({'success': True, 'actualizacion': nueva_actualizacion}), 200
 
 
 
@@ -648,21 +668,24 @@ def crear_app():
 
     def obtener_solicitudes_empresa():
         try:
-            solicitudes = con_bd.solicitudes.find()
-            return list(solicitudes)
+            # Obtener todas las solicitudes desde la base de datos
+            solicitudes = list(con_bd.solicitudes.find())
+            return solicitudes
         except Exception as e:
             print(f"Error al obtener las solicitudes: {e}")
             return []
+
 
     @app.route('/solicitudes')
     def ver_solicitudes():
         if 'email' not in session:
             return redirect(url_for('login'))
 
-        email_empresa = session['email']
-        solicitudes = obtener_solicitudes_empresa(email_empresa)
+        # Obtener todas las solicitudes
+        solicitudes = obtener_solicitudes_empresa()
 
         return render_template('dashboard.html', solicitudes=solicitudes)
+
 
     def obtener_usuarios_empresa():
         try:
@@ -795,6 +818,19 @@ def crear_app():
             return redirect(url_for('ver_proyecto', proyecto_id=proyecto_id))
 
 
+    @app.route('/eliminar_actividad/<actividad_id>', methods=['DELETE'])
+    def eliminar_actividad(actividad_id):
+        try:
+            resultado = con_bd.actividades.delete_one({"_id": ObjectId(actividad_id)})
+
+            if resultado.deleted_count == 1:
+                return jsonify({"success": "Actividad eliminada correctamente."}), 200
+            else:
+                return jsonify({"error": "Actividad no encontrada."}), 404
+        except Exception as e:
+            print(f"Error al eliminar la actividad: {e}")
+            return jsonify({"error": "Error al eliminar la actividad."}), 500
+
     @app.route('/editar_estado/<proyecto_id>', methods=['GET', 'POST'])
     def editar_estado(proyecto_id):
         if request.method == 'POST':
@@ -829,7 +865,7 @@ def crear_app():
 
         return jsonify({'success': 'Actividad actualizada'})
 
-    @app.route('/proyecto/<proyecto_id>', methods=['GET'])
+    @app.route('/proyecto/<proyecto_id>', methods=['GET'],endpoint='ver_proyecto')
     def ver_proyecto(proyecto_id):
         if 'email' not in session:
             return redirect(url_for('login'))

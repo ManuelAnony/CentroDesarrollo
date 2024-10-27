@@ -9,24 +9,88 @@
     <link rel="stylesheet" href="{{ url_for('static', filename = 'css/login.css') }}">
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <style>
-        .alert-floating {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1050;
-        }
-        .btn-custom {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .formulario-crear-actividad {
-            display: none;
-        }
         .activity-item {
             display: flex;
+            align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 10px;
+            gap: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+    
+        /* Contenedor de observaciones */
+        .activity-observations {
+            flex: 3;
+            max-width: 60%; /* Ajustar ancho máximo */
+        }
+    
+        .activity-observations textarea {
+            width: 100%; /* Ancho completo del contenedor */
+            height: 80px; /* Altura inicial fija */
+            max-height: 300px; /* Altura máxima */
+            resize: vertical; /* Solo permite redimensionamiento vertical */
+            overflow-y: auto;
+        }
+    
+        /* Contenedor de estado */
+        .activity-status {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             align-items: center;
+        }
+    
+        .activity-status label {
+            margin-bottom: 5px;
+        }
+    
+        .activity-status select {
+            width: 150px;
+            height: 40px;
+            text-align: center;
+        }
+    
+        /* Botón de eliminación */
+        .activity-actions {
+            flex: 0.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        .btn-eliminar {
+            width: 100px;
+            height: 40px;
+        }
+        .status-sin-iniciar {
+            background-color: #f0ad4e; /* Naranja */
+            color: white;
+        }
+    
+        .status-en-proceso {
+            background-color: #5bc0de; /* Azul */
+            color: white;
+        }
+    
+        .status-finalizado {
+            background-color: #5cb85c; /* Verde */
+            color: white;
+        }
+    
+        /* Ajuste para que los select se vean consistentes */
+        .form-select {
+            width: 150px;
+            height: 40px;
+            text-align: center;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+    
+        /* Selectores para mantener el color al seleccionar */
+        .form-select option {
+            color: black;
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
@@ -84,7 +148,8 @@
                             <label for="nombre_actividad">Nombre de la Actividad:</label>
                             <input type="text" name="nombre_actividad" required class="form-control">
                             <label for="fecha_vencimiento">Fecha de Vencimiento:</label>
-                            <input type="date" name="fecha_vencimiento" required class="form-control">
+                <input type="date" name="fecha_vencimiento" required class="form-control">
+
                             <button type="submit" class="btn btn-success mt-3">Crear Actividad</button>
                         </form>
                     </div>
@@ -95,20 +160,41 @@
                     <div>
                         <ul>
                             {% for actividad in actividades %}
-                                <li class="activity-item">
-                                    <div>
-                                        <strong>{{ actividad.nombre }}</strong> - {{ actividad.fecha_vencimiento }}
-                                        <br>
-                                        Observaciones: <textarea class="form-control mt-1 observaciones" data-actividad-id="{{ actividad._id }}">{{ actividad.observaciones }}</textarea>
-                                    </div>
-                                    <div>
-                                        <select class="form-select form-select-sm ms-2 update-activity-status" data-actividad-id="{{ actividad._id }}">
-                                            <option value="Sin Iniciar" class="status-sin-iniciar" {% if actividad.estado == "Sin Iniciar" %}selected{% endif %}>Sin Iniciar</option>
-                                            <option value="En Proceso" class="status-en-proceso" {% if actividad.estado == "En Proceso" %}selected{% endif %}>En Proceso</option>
-                                            <option value="Finalizado" class="status-finalizado" {% if actividad.estado == "Finalizado" %}selected{% endif %}>Finalizado</option>
-                                        </select>
-                                    </div>
-                                </li>
+                            <li class="activity-item">
+                                <div class="activity-observations">
+                                    <strong>{{ actividad.nombre }}</strong> - {{ actividad.fecha_vencimiento }}
+                                    <br>
+                                    <label for="observaciones_{{ actividad._id }}">Observaciones:</label>
+                                    <textarea id="observaciones_{{ actividad._id }}" 
+                                              class="form-control mt-1 observaciones" 
+                                              data-actividad-id="{{ actividad._id }}">{{ actividad.observaciones }}</textarea>
+                                </div>
+                                 <!-- Estado -->
+                                 <div class="activity-status">
+                                    <label for="estado_{{ actividad._id }}">Estado:</label>
+                                    <select id="estado_{{ actividad._id }}" 
+                                            class="form-select form-select-sm update-activity-status" 
+                                            data-actividad-id="{{ actividad._id }}">
+                                        <option value="Sin Iniciar" {% if actividad.estado == "Sin Iniciar" %}selected{% endif %}>
+                                            Sin Iniciar
+                                        </option>
+                                        <option value="En Proceso" {% if actividad.estado == "En Proceso" %}selected{% endif %}>
+                                            En Proceso
+                                        </option>
+                                        <option value="Finalizado" {% if actividad.estado == "Finalizado" %}selected{% endif %}>
+                                            Finalizado
+                                        </option>
+                                    </select>
+                                </div>                               
+                                
+
+                                <!-- Botón Eliminar -->
+                                <div class="activity-actions">
+                                    <button class="btn btn-danger-custom btn-eliminar" data-actividad-id="{{ actividad._id }}">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -124,62 +210,101 @@
                 $(".formulario-crear-actividad").slideToggle();
             });
         });
-        $(document).ready(function() {
+        $(document).ready(function () {
             function updateStatusColor(element) {
                 var status = element.val();
                 element.removeClass("status-sin-iniciar status-en-proceso status-finalizado");
-                if (status == "Sin Iniciar") {
+                if (status === "Sin Iniciar") {
                     element.addClass("status-sin-iniciar");
-                } else if (status == "En Proceso") {
+                } else if (status === "En Proceso") {
                     element.addClass("status-en-proceso");
-                } else if (status == "Finalizado") {
+                } else if (status === "Finalizado") {
                     element.addClass("status-finalizado");
                 }
             }
 
-            $(".update-activity-status").each(function() {
+            $(".update-activity-status").each(function () {
                 updateStatusColor($(this));
             });
-
-            $(".update-activity-status").change(function() {
+    
+            $(".update-activity-status").change(function () {
                 var actividadId = $(this).data("actividad-id");
                 var nuevoEstado = $(this).val();
                 var observaciones = $(this).closest(".activity-item").find(".observaciones").val();
                 updateStatusColor($(this));
-
+    
                 $.ajax({
                     url: "/actualizar_actividad",
                     type: "POST",
                     contentType: "application/json",
                     data: JSON.stringify({ actividad_id: actividadId, nuevo_estado: nuevoEstado, observaciones: observaciones }),
-                    success: function(response) {
+                    success: function (response) {
                         alert("Actividad actualizada.");
                     },
-                    error: function(xhr, status, error) {
+                    error: function (xhr, status, error) {
                         console.error("Error al actualizar la actividad:", error);
                     }
                 });
             });
 
-            $(".observaciones").change(function() {
+            $(".observaciones").change(function () {
                 var actividadId = $(this).data("actividad-id");
                 var nuevoEstado = $(this).closest(".activity-item").find(".update-activity-status").val();
                 var observaciones = $(this).val();
-
+    
                 $.ajax({
                     url: "/actualizar_actividad",
                     type: "POST",
                     contentType: "application/json",
                     data: JSON.stringify({ actividad_id: actividadId, nuevo_estado: nuevoEstado, observaciones: observaciones }),
-                    success: function(response) {
+                    success: function (response) {
                         alert("Observaciones actualizadas.");
                     },
-                    error: function(xhr, status, error) {
+                    error: function (xhr, status, error) {
                         console.error("Error al actualizar las observaciones:", error);
                     }
                 });
             });
         });
+
+        $(document).ready(function () {
+            // Delegación de eventos para asegurar que funcione tras cargar dinámicamente
+            $(document).on("click", ".btn-eliminar", function (e) {
+                e.preventDefault(); // Prevenir el comportamiento predeterminado
+        
+                const actividadId = $(this).data("actividad-id");
+        
+                if (confirm("¿Estás seguro de que deseas eliminar esta actividad?")) {
+                    $.ajax({
+                        url: `/eliminar_actividad/${actividadId}`,
+                        type: "DELETE",
+                        success: function (response) {
+                            alert(response.success || "Actividad eliminada correctamente.");
+                            location.reload(); // Recargar la página para reflejar los cambios
+                        },
+                        error: function (xhr) {
+                            console.error("Error al eliminar la actividad:", xhr.responseJSON.error);
+                            alert("Hubo un error al eliminar la actividad.");
+                        }
+                    });
+                }
+            });
+        });
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            const fechaVencimientoInput = document.querySelector('input[name="fecha_vencimiento"]');
+            
+            const hoy = new Date();
+            const dosAniosDespues = new Date(hoy);
+            dosAniosDespues.setFullYear(hoy.getFullYear() + 2);
+        
+            // Formato YYYY-MM-DD
+            const formatoFecha = (fecha) => fecha.toISOString().split('T')[0];
+        
+            fechaVencimientoInput.min = formatoFecha(hoy);
+            fechaVencimientoInput.max = formatoFecha(dosAniosDespues);
+        });
+        
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

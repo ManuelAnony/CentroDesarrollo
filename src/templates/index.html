@@ -42,32 +42,73 @@
     .table th, .table td {
         vertical-align: middle;
     }
+
+    
+
+        /* Menú de navegación */
+        .navbar-container {
+            position: sticky;
+            top: 120px; /* Debajo de la barra superior */
+            z-index: 999;
+            background-color: #343a40;
+            padding: 10px 0;
+            width: 100%;
+        }
+
+        /* Estilo para las pestañas activas */
+        .nav-tabs .nav-link.active {
+            background-color: #FFC107;
+            color: black;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        /* Efecto de hover */
+        .nav-tabs .nav-link:hover {
+            background-color: #007BFF;
+            color: white;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        /* Espaciado adecuado para evitar solapamiento */
+        body {
+            margin: 0;
+            padding-top: 180px; /* Espacio para la barra y el menú */
+        }
+  </style>
+
   </style>
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 {% block content %}
-<div class="d-flex justify-content-between mb-3 navbar">
-    <h1>Service Manager</h1>
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-        <li class="nav-item">
-            <a class="nav-link active" id="tabProyectos" data-toggle="tab" href="#proyectos" role="tab" aria-controls="proyectos" aria-selected="true">Proyectos</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="tabSolicitudes" data-toggle="tab" href="#solicitudes" role="tab" aria-controls="solicitudes" aria-selected="false">Solicitudes</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="tabEmpresas" data-toggle="tab" href="#empresas" role="tab" aria-controls="empresas" aria-selected="false">Empresas</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="tabRegistrarDesarrollador" data-toggle="tab" href="#registrarDesarrollador" role="tab" aria-controls="registrarDesarrollador" aria-selected="false">Registrar Desarrollador</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="tabSeguridad" data-toggle="tab" href="#seguridad" role="tab" aria-controls="seguridad" aria-selected="false">Seguridad</a>
-        </li>
-    </ul>
-    <a href="/logout" class="btn btn-danger-custom">Cerrar Sesión</a>
-</div>
+<div class="navbar-container">
+    <div class="navbar d-flex justify-content-between">
+        <h1>Service Manager</h1>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="tabProyectos" data-toggle="tab" href="#proyectos" role="tab"
+                   aria-controls="proyectos" aria-selected="true">Proyectos</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabSolicitudes" data-toggle="tab" href="#solicitudes" role="tab"
+                   aria-controls="solicitudes" aria-selected="false">Solicitudes</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabEmpresas" data-toggle="tab" href="#empresas" role="tab"
+                   aria-controls="empresas" aria-selected="false">Empresas</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabRegistrarDesarrollador" data-toggle="tab" href="#registrarDesarrollador"
+                   role="tab" aria-controls="registrarDesarrollador" aria-selected="false">Registrar Desarrollador</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tabSeguridad" data-toggle="tab" href="#seguridad" role="tab"
+                   aria-controls="seguridad" aria-selected="false">Seguridad</a>
+            </li>
+        </ul>
+        <a href="/logout" class="btn btn-danger-custom">Cerrar Sesión</a>
+    </div>
 </div>
 
 <div class="tab-content" id="myTabContent">
@@ -107,9 +148,10 @@
                         </form>
                     </div>
                 </div>
+                
                 <div class="col-md-8">
                     <div class="card card-body">
-                        <h2>Proyectos en Curso</h2>
+                        <h2>Proyectos</h2>
                         <label for="estado_filtro">Filtrar por estado:</label>
                         <select id="estado_filtro" class="form-control" onchange="filtrarProyectos()">
                             <option value="Todos">Todos</option>
@@ -155,6 +197,7 @@
         </div>
     </div>
 
+
     <!-- Contenido de Solicitudes -->
     <div id="solicitudes" class="tab-pane fade" role="tabpanel" aria-labelledby="tabSolicitudes">
         <div class="container pt-5">
@@ -163,6 +206,7 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
+                            <th>Empresa</th>
                             <th>Nombre de la Solicitud</th>
                             <th>Descripción</th>
                             <th>Estado Actual</th>
@@ -172,11 +216,12 @@
                     </thead>
                     <tbody>
                         {% for solicitud in solicitudes %}
-                        <tr>
+                        <tr data-id="{{ solicitud['_id'] }}">
+                            <td>{{ solicitud['email'] or 'No especificado' }}</td>
                             <td>{{ solicitud['nombre_solicitud'] }}</td>
                             <td>{{ solicitud['descripcion_solicitud'] }}</td>
                             <td>{{ solicitud['estado'] }}</td>
-                            <td>
+                            <td class="comentarios-container" data-id="{{ solicitud['_id'] }}">
                                 <ul>
                                     {% for actualizacion in solicitud['actualizaciones'] %}
                                     <li>{{ actualizacion['fecha'] }} - {{ actualizacion['estado'] }}: {{ actualizacion['comentario'] }}</li>
@@ -184,22 +229,25 @@
                                 </ul>
                             </td>
                             <td>
-                                <form action="{{ url_for('actualizar_solicitud', solicitud_id=solicitud['_id']) }}" method="POST">
-                                    <select name="estado" class="form-select mb-2" required>
-                                        <option value="Pendiente" {% if solicitud['estado'] == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                        <option value="En proceso" {% if solicitud['estado'] == 'En proceso' %}selected{% endif %}>En proceso</option>
-                                        <option value="Completada" {% if solicitud['estado'] == 'Completada' %}selected{% endif %}>Completada</option>
-                                        <option value="Rechazada" {% if solicitud['estado'] == 'Rechazada' %}selected{% endif %}>Rechazada</option>
-                                    </select>
-                                    <textarea name="comentario" class="form-control mb-2" placeholder="Agregar comentario" required></textarea>
-                                    <input type="date" name="fecha_actualizacion" class="form-control mb-2" required>
-                                    <button type="submit" class="btn btn-primary-custom btnRegistro">Actualizar</button>
-                                    <a href="#" class="btn btn-danger-custom btn-sm" onclick="confirmarEliminarSolicitud('{{ solicitud._id }}')">Eliminar</a>
-                                </form>
+                                <button 
+                                    class="btn btn-primary-custom btnRegistro abrir-modal" 
+                                    data-id="{{ solicitud['_id'] }}" 
+                                    data-estado="{{ solicitud['estado'] }}" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#modalComentarios">
+                                    Agregar Comentario
+                                </button>
+                                <a href="#" 
+                                   class="btn btn-danger-custom btn-sm" 
+                                   onclick="confirmarEliminarSolicitud('{{ solicitud['_id'] }}')">
+                                    Eliminar
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
+                    
+                    
                 </table>
                 <div class="d-flex justify-content-between">
                     <button id="anterior-solicitud" class="btn btn-primary-custom" onclick="cambiarPaginaSolicitudes(-1)">Anterior</button>
@@ -208,6 +256,37 @@
             </div>
         </div>
     </div>
+
+   <!-- Modal para Comentarios -->
+    <div id="modalComentarios" class="modal fade" tabindex="-1" aria-labelledby="modalComentariosLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalComentariosLabel">Agregar Comentario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formComentarios">
+                        <input type="hidden" name="solicitud_id" id="solicitudId">
+                        <div class="mb-3">
+                            <label for="estado" class="form-label">Estado</label>
+                            <select name="estado" id="estado" class="form-select" required>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En proceso">En proceso</option>
+                                <option value="Completada">Completada</option>
+                                <option value="Rechazada">Rechazada</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nuevoComentario" class="form-label">Nuevo Comentario</label>
+                            <textarea name="comentario" id="nuevoComentario" class="form-control" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>    
 
     <!-- Contenido de Empresas -->
     <div id="empresas" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab">
@@ -410,6 +489,55 @@
         }
     })
 
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalComentarios = document.getElementById('modalComentarios');
+        const formComentarios = document.getElementById('formComentarios');
+    
+        // Configuración del modal para asignar valores al abrir
+        modalComentarios.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const solicitudId = button.getAttribute('data-id');
+            const estado = button.getAttribute('data-estado');
+    
+            document.getElementById('solicitudId').value = solicitudId;
+            document.getElementById('estado').value = estado;
+        });
+    
+        // Envío del formulario
+        formComentarios.addEventListener('submit', function (event) {
+            event.preventDefault();
+    
+            const solicitudId = document.getElementById('solicitudId').value;
+            const estado = document.getElementById('estado').value;
+            const comentario = document.getElementById('nuevoComentario').value;
+    
+            fetch(`/actualizar_solicitud/${solicitudId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado, comentario })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Solicitud actualizada correctamente.');
+    
+                    // Recargar la página para reflejar los cambios
+                    location.reload();
+                } else {
+                    alert('Error al actualizar la solicitud.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error al actualizar la solicitud.');
+            });
+        });
+    });
+    
+    
+    
+    
+
     // Paginación de proyectos
     var proyectosPorPagina = 6;
     var paginaActual = 1;
@@ -464,5 +592,40 @@
         document.getElementById('siguiente-solicitud').disabled = fin >= solicitudes.length;
     }
     mostrarSolicitudes();
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const fechaInicioInput = document.querySelector('input[name="fecha_inicio"]');
+        const fechaFinalizacionInput = document.querySelector('input[name="fecha_finalizacion"]');
+    
+        const hoy = new Date();
+        const dosAniosDespues = new Date(hoy);
+        dosAniosDespues.setFullYear(hoy.getFullYear() + 2);
+    
+        const dosMesesDespues = new Date(hoy);
+        dosMesesDespues.setMonth(hoy.getMonth() + 2);
+    
+        // Formato YYYY-MM-DD
+        const formatoFecha = (fecha) => fecha.toISOString().split('T')[0];
+    
+        // Configurar min y max para la fecha de inicio
+        fechaInicioInput.min = formatoFecha(hoy);
+        fechaInicioInput.max = formatoFecha(dosAniosDespues);
+    
+        // Cambiar las restricciones de fecha final según la fecha de inicio seleccionada
+        fechaInicioInput.addEventListener("change", function () {
+            const fechaInicioSeleccionada = new Date(this.value);
+            const fechaMinimaFinalizacion = new Date(fechaInicioSeleccionada);
+            fechaMinimaFinalizacion.setMonth(fechaMinimaFinalizacion.getMonth() + 2);
+    
+            // Establecer restricciones en la fecha de finalización
+            fechaFinalizacionInput.min = formatoFecha(fechaMinimaFinalizacion);
+            fechaFinalizacionInput.max = formatoFecha(dosAniosDespues);
+        });
+    
+        // Configurar min y max inicial para la fecha de finalización
+        fechaFinalizacionInput.min = formatoFecha(dosMesesDespues);
+        fechaFinalizacionInput.max = formatoFecha(dosAniosDespues);
+    });
+    
 </script>
 {% endblock %}
