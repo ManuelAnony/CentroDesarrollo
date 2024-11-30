@@ -17,3 +17,4 @@ Flask-Mail
 Flask-Limiter
 validators
 python-dotenv
+functools 

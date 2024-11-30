@@ -47,3 +47,4 @@ Flask-WTF
 Flask-Limiter
 validators
 Flask-Mail
+functools

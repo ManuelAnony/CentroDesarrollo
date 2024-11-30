@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from config import *
 from datetime import datetime
+from functools import wraps
 import re
 import smtplib
 import random
@@ -38,6 +39,43 @@ def crear_app():
     def generate_verification_code():
         return ''.join(str(random.randint(0, 9)) for _ in range(6))
 
+    def requiere_autenticacion(rol_requerido=None, verificacion_requerida=False):
+        """
+        Decorador para verificar si el usuario está autenticado y tiene el rol correcto.
+        """
+        def decorador(f):
+            @wraps(f)
+            def envoltura(*args, **kwargs):
+                # Verificar si el usuario está autenticado
+                email = session.get('email')
+                if not email:
+                    flash('Debes iniciar sesión para acceder a esta página.', 'danger')
+                    return redirect(url_for('login'))
+                
+                # Verificar el rol del usuario
+                usuario = con_bd.usuarios.find_one({"email": email})
+                if not usuario or (rol_requerido and usuario.get("rol") != rol_requerido):
+                    flash('No tienes permiso para acceder a esta página.', 'danger')
+                    return redirect(url_for('login'))
+
+                # Verificar si el usuario está verificado (solo para Empresas)
+                if verificacion_requerida and usuario.get("rol") == "Empresa" and not usuario.get("verificado"):
+                    flash('Debes verificar tu cuenta para acceder.', 'warning')
+                    session.pop('email', None)  # Invalidar la sesión
+                    return redirect(url_for('verificacionEmpresa'))
+                
+                return f(*args, **kwargs)
+            return envoltura
+        return decorador 
+       
+    @app.after_request
+    def agregar_encabezados_no_cache(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+
+    
     ## Cambio de contraseña de empresa
     @app.route('/change_password', methods=['GET', 'POST'])
     def change_password():
@@ -211,18 +249,28 @@ def crear_app():
 
     @app.route('/validar_codigo_verificacion', methods=['POST'])
     def validar_codigo_verificacion():
-        if request.method == 'POST':
-            entered_code = request.form.get('verification_code')
-            verification_code = session.get('verification_code')
+        email = request.form.get('email')  # Obtiene el email del formulario
+        entered_code = request.form.get('verification_code')  # Código ingresado
+        verification_code = session.get('verification_code')  # Código esperado
 
-            if entered_code == verification_code:
-                flash('Registro completado exitosamente', 'success')
-                session.pop('verification_code', None)
+        if entered_code == verification_code:
+            # Actualiza el campo verificado en la base de datos
+            resultado = con_bd.usuarios.update_one(
+                {"email": email},
+                {"$set": {"verificado": True}}
+            )
+
+            if resultado.matched_count > 0:
+                session.pop('verification_code', None)  # Limpia el código de la sesión
+                flash('Tu cuenta ha sido verificada exitosamente.', 'success')
                 return redirect(url_for('login'))
             else:
-                flash('Código de verificación incorrecto', 'danger')
+                flash('No se encontró el usuario en la base de datos. Inténtalo nuevamente.', 'danger')
+        else:
+            flash('El código ingresado es incorrecto.', 'danger')
 
-        return render_template('verificacion.html')
+        return redirect(url_for('verificacionEmpresa'))
+
 
     ## Eliminar usuario, solicitud o proyecto
     @app.route('/eliminar_usuario/<usuario_id>')
@@ -285,40 +333,64 @@ def crear_app():
     ## Login de usuarios
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        # Verificar si el usuario ya está autenticado en la sesión
         if 'email' in session:
             usuario = con_bd.usuarios.find_one({"email": session['email']})
             if usuario:
-                if usuario.get("rol") == "Administrador":
-                    return redirect(url_for('index'))
-                elif usuario.get("rol") == "Desarrollador":
-                    return redirect(url_for('proyecto'))
-                elif usuario.get("rol") == "Empresa":
-                    return redirect(url_for('dashcompany'))
+                # Redirigir según el rol
+                return redirigir_por_rol(usuario)
 
         if request.method == 'POST':
             email = request.form.get("email")
             password = request.form.get("password")
 
+            # Validar el formato del correo
             if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
                 flash('Por favor, ingresa una dirección de correo electrónico válida.', 'danger')
                 return redirect(url_for('login'))
 
+            # Buscar usuario en la base de datos
             usuario = con_bd.usuarios.find_one({"email": email})
-            
+
             if usuario and check_password_hash(usuario["password"], password):
-                session['email'] = usuario['email']
-                if usuario.get("rol") == "Administrador":
-                    return redirect(url_for('index'))
-                elif usuario.get("rol") == "Desarrollador":
-                    return redirect(url_for('proyecto'))
-                elif usuario.get("rol") == "Empresa" and usuario.get("verificado"):
-                    return redirect(url_for('dashcompany'))
-                else:
-                    flash('Error vuelve a intentarlo.', 'danger')
+                # Guardar el email en la sesión
+                session['email'] = email
+
+                # Verificación de usuarios con rol "Empresa"
+                if usuario.get("rol") == "Empresa":
+                    if not usuario.get("verificado"):
+                        # Usuario Empresa no verificado, enviar nuevo código y redirigir
+                        session['email_verificar'] = email
+                        verification_code = generate_verification_code()
+                        session['verification_code'] = verification_code
+                        send_verification_email(email, verification_code)
+
+                        flash('Tu cuenta no está verificada. Se ha enviado un nuevo código a tu correo.', 'warning')
+                        return redirect(url_for('verificacionEmpresa'))
+
+                # Redirigir según el rol
+                return redirigir_por_rol(usuario)
+
             else:
                 flash('Credenciales inválidas. Por favor, verifica tu email y contraseña.', 'danger')
 
         return render_template('login.html')
+
+
+    # Función auxiliar para manejar la redirección según el rol del usuario
+    def redirigir_por_rol(usuario):
+        """
+        Redirigir al usuario según su rol.
+        """
+        if usuario.get("rol") == "Administrador":
+            return redirect(url_for('index'))
+        elif usuario.get("rol") == "Desarrollador":
+            return redirect(url_for('proyecto'))
+        elif usuario.get("rol") == "Empresa":
+            return redirect(url_for('dashcompany'))
+        else:
+            flash('Rol no reconocido.', 'danger')
+            return redirect(url_for('login'))
 
     ## Seguridad de caché y cabeceras
     @app.after_request
@@ -350,7 +422,6 @@ def crear_app():
             return False
         return True
 
-    ## Registro de empresas
     @app.route('/registroEmpresa', methods=['GET', 'POST'])
     def registroEmpresa():
         if request.method == 'POST':
@@ -378,8 +449,10 @@ def crear_app():
                 flash("El correo electrónico ya está en uso.")
                 return redirect(url_for('registroEmpresa'))
 
+            # Generar código de verificación y enviar correo
             verification_code = generate_verification_code()
             session['verification_code'] = verification_code
+            session['email_verificar'] = email  # Guardar el email en la sesión para la verificación
             send_verification_email(email, verification_code)
 
             hashed_password = generate_password_hash(password)
@@ -389,7 +462,8 @@ def crear_app():
                 "administrador": administrador,
                 "email": email,
                 "password": hashed_password,
-                "rol": admin
+                "rol": admin,
+                "verificado": False  # Nuevo campo para indicar si el usuario está verificado
             }
             con_bd.usuarios.insert_one(nuevo_usuario)
 
@@ -398,21 +472,46 @@ def crear_app():
 
         return render_template('registro.html')
 
+
+
     ## Página de verificación de registro de empresa
     @app.route('/verificacionEmpresa', methods=['GET', 'POST'])
     def verificacionEmpresa():
-        if request.method == 'POST':
-            entered_code = request.form.get('verification_code')
-            verification_code = session.get('verification_code')
+        email = session.get('email_verificar')  # Obtener el email desde la sesión
+        if not email:  # Si no está en la sesión, redirigir al login
+            flash('No se encontró un correo asociado para verificar.', 'danger')
+            return redirect(url_for('login'))
 
+        if request.method == 'POST':
+            entered_code = request.form.get('verification_code')  # Código ingresado por el usuario
+            verification_code = session.get('verification_code')  # Código almacenado en la sesión
+
+            # Verificar si el código es correcto
             if entered_code == verification_code:
-                flash('Registro completado exitosamente', 'success')
-                session.pop('verification_code', None)
-                return redirect(url_for('login'))
+                # Actualizar el campo 'verificado' en la base de datos
+                resultado = con_bd.usuarios.update_one(
+                    {"email": email},  # Filtro para encontrar el usuario
+                    {"$set": {"verificado": True}}  # Campo a actualizar
+                )
+
+                if resultado.matched_count > 0:
+                    session.pop('verification_code', None)  # Eliminar el código de la sesión
+                    session.pop('email_verificar', None)  # Eliminar el email de la sesión
+                    flash('Tu cuenta ha sido verificada exitosamente.', 'success')
+                    return redirect(url_for('login'))
+                else:
+                    flash('No se pudo actualizar el estado de verificación. Por favor, intenta de nuevo.', 'danger')
             else:
-                flash('Código de verificación incorrecto', 'danger')
+                flash('Código de verificación incorrecto. Por favor, revisa tu correo.', 'danger')
 
         return render_template('verificacion.html')
+
+
+
+
+    
+    
+
 
     @app.route('/registroEquipo', methods=['GET', 'POST'])
     def registroEquipo():
@@ -509,6 +608,7 @@ def crear_app():
             return None
 
     @app.route('/dashcompany')
+    @requiere_autenticacion(rol_requerido="Empresa", verificacion_requerida=True)
     def dashcompany():
         if 'email' not in session or con_bd.usuarios.find_one({"email": session['email'], "rol": "Empresa"}) is None:
             return redirect(url_for('login'))
@@ -726,6 +826,7 @@ def crear_app():
     @app.route('/')
     @app.route('/index')
     @app.route('/home')
+    @requiere_autenticacion(rol_requerido="Administrador")
     def index():
         if 'email' not in session:
             return redirect(url_for('login'))
@@ -880,6 +981,7 @@ def crear_app():
         return render_template('proyecto_detalle.html', proyecto=proyecto, actividades=actividades)
 
     @app.route('/proyecto')
+    @requiere_autenticacion(rol_requerido="Desarrollador")
     def proyecto():
         if 'email' not in session:
             return redirect(url_for('login'))
