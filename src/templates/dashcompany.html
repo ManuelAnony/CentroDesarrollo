@@ -247,18 +247,45 @@
             }
         }
         
-        // Establece la fecha actual en el campo de fecha
-        function establecerFechaActual() {
+        $(function () {
             const hoy = new Date();
             const dia = String(hoy.getDate()).padStart(2, '0');
             const mes = String(hoy.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
             const anio = hoy.getFullYear();
-            const fechaFormateada = `${dia}/${mes}/${anio}`;
-            document.getElementById("fechaSolicitud").value = fechaFormateada;
-        }
 
-        document.addEventListener("DOMContentLoaded", establecerFechaActual);
+            // Fecha mínima: Hoy
+            const fechaMinima = hoy;
 
+            // Fecha máxima: 3 meses desde hoy
+            const fechaMaxima = new Date(hoy);
+            fechaMaxima.setMonth(hoy.getMonth() + 3);
+
+            // Establecer la fecha actual en el campo
+            $("#fechaSolicitud").val(`${dia}/${mes}/${anio}`);
+
+            // Configurar el datepicker
+            $("#fechaSolicitud").datepicker({
+                dateFormat: "dd/mm/yy",
+                changeMonth: true,
+                changeYear: true,
+                minDate: fechaMinima, // Hoy
+                maxDate: fechaMaxima, // Máximo 3 meses
+                onSelect: function (dateText) {
+                    validarFecha(dateText);
+                }
+            });
+
+            // Validar fecha seleccionada
+            function validarFecha(fechaSeleccionada) {
+                const partesFecha = fechaSeleccionada.split("/");
+                const fechaSeleccionadaDate = new Date(partesFecha[2], partesFecha[1] - 1, partesFecha[0]); // Formato: YYYY-MM-DD
+
+                if (fechaSeleccionadaDate < fechaMinima || fechaSeleccionadaDate > fechaMaxima) {
+                    alert("La fecha debe ser igual o mayor a hoy y no exceder los 3 meses.");
+                    $("#fechaSolicitud").val(`${dia}/${mes}/${anio}`); // Restaurar la fecha actual
+                }
+            }
+        });
         
 
         function mostrarFormulario() {
@@ -325,22 +352,21 @@
         });
 
         // Cerrar Sesion por inactividad
-         
         let tiempoInactividad = 300000; // 5 minutos en milisegundos
         let temporizador;
-
+    
         // Función para reiniciar el temporizador
         function resetearTemporizador() {
             clearTimeout(temporizador);
             temporizador = setTimeout(cerrarSesion, tiempoInactividad);
         }
-
+    
         // Función para cerrar la sesión
         function cerrarSesion() {
             alert("Tu sesión ha expirado por inactividad.");
             window.location.href = "{{ url_for('logout') }}";
         }
-
+    
         // Eventos que indican actividad del usuario
         function registrarEventos() {
             const eventos = [
@@ -352,17 +378,18 @@
                 'touchmove',   // Movimiento en pantallas táctiles
                 'click'        // Clic en cualquier parte
             ];
-
+    
             eventos.forEach(evento => {
                 document.addEventListener(evento, resetearTemporizador);
             });
         }
-
+    
         // Iniciar monitoreo
         window.onload = () => {
             registrarEventos();
             resetearTemporizador();
-        };
+        };   
+    
         
     </script>
 </body>
