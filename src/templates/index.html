@@ -626,6 +626,48 @@
         fechaFinalizacionInput.min = formatoFecha(dosMesesDespues);
         fechaFinalizacionInput.max = formatoFecha(dosAniosDespues);
     });
+    // Cerrar Sesion por inactividad
+         
+    let tiempoInactividad = 300000; // 5 minutos en milisegundos
+    let temporizador;
+
+    // Función para reiniciar el temporizador
+    function resetearTemporizador() {
+        clearTimeout(temporizador);
+        temporizador = setTimeout(cerrarSesion, tiempoInactividad);
+    }
+
+    // Función para cerrar la sesión
+    function cerrarSesion() {
+        alert("Tu sesión ha expirado por inactividad.");
+        window.location.href = "{{ url_for('logout') }}";
+    }
+
+    // Eventos que indican actividad del usuario
+    function registrarEventos() {
+        const eventos = [
+            'mousemove',   // Movimiento del mouse
+            'mousedown',   // Clic del mouse
+            'keypress',    // Presión de teclas
+            'scroll',      // Desplazamiento
+            'touchstart',  // Toque en pantallas táctiles
+            'touchmove',   // Movimiento en pantallas táctiles
+            'click'        // Clic en cualquier parte
+        ];
+
+        eventos.forEach(evento => {
+            document.addEventListener(evento, resetearTemporizador);
+        });
+    }
+
+    // Iniciar monitoreo
+    window.onload = () => {
+        registrarEventos();
+        resetearTemporizador();
+    };
+
+
+    
     
 </script>
 {% endblock %}

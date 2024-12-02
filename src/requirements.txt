@@ -17,4 +17,4 @@ Flask-Mail
 Flask-Limiter
 validators
 python-dotenv
- 
+flask-session

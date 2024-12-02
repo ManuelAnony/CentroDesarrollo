@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from config import *
-from datetime import datetime
+from datetime import datetime, timedelta
+from flask_session import Session
 from functools import wraps
 import re
 import smtplib
@@ -32,9 +33,34 @@ def crear_app():
         if parsed_url.hostname not in allowed_domains:
             return False  # Dominio no autorizado
         return True
+    
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 
     allowed_domains = ['centrodesarrollo.onrender.com', '127.0.0.1']
 
+    # Configuración de Flask-Session
+    app.config['SESSION_TYPE'] = 'filesystem'  # Almacenar sesiones en el sistema de archivos
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)  # Tiempo de inactividad
+    app.config['SESSION_FILE_DIR'] = './flask_sessions'  # Carpeta donde se almacenan las sesiones
+    app.config['SESSION_PERMANENT'] = False
+    Session(app)
+    
+    @app.before_request
+    def rastrear_actividad():
+        if 'email' in session:
+            ahora = datetime.now()
+            ultima_actividad = session.get('ultima_actividad')
+            if ultima_actividad:
+                diferencia = ahora - datetime.fromisoformat(ultima_actividad)
+                if diferencia.total_seconds() > 300:  # Más de 5 minutos
+                    session.clear()  # Limpiar la sesión
+                    flash('Sesión cerrada por inactividad.', 'warning')
+                    return redirect(url_for('login'))
+            session['ultima_actividad'] = ahora.isoformat()  # Actualizar última actividad
+    
     # Generar código de verificación de 6 dígitos
     def generate_verification_code():
         return ''.join(str(random.randint(0, 9)) for _ in range(6))
@@ -90,26 +116,37 @@ def crear_app():
             new_password = request.form.get('new_password')
             confirm_new_password = request.form.get('confirm_new_password')
 
+            # Validar que todos los campos estén completos
             if not current_password or not new_password or not confirm_new_password:
                 flash('Por favor, completa todos los campos.', 'danger')
                 return redirect(url_for('change_password'))
 
+            # Validar que la contraseña actual sea correcta
             if not usuario or not check_password_hash(usuario['password'], current_password):
                 flash('La contraseña actual no es correcta.', 'danger')
                 return redirect(url_for('change_password'))
 
+            # Validar que las contraseñas nuevas coincidan
             if new_password != confirm_new_password:
                 flash('Las nuevas contraseñas no coinciden.', 'danger')
                 return redirect(url_for('change_password'))
 
+            # Validar que la nueva contraseña sea diferente de la actual
             if current_password == new_password:
                 flash('La nueva contraseña no puede ser igual a la anterior.', 'danger')
                 return redirect(url_for('change_password'))
 
+            # Validar la seguridad de la nueva contraseña
+            if not validar_contraseña(new_password):
+                flash('La nueva contraseña debe tener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial.', 'danger')
+                return redirect(url_for('change_password'))
+
+            # Si todas las validaciones son correctas, actualizar la contraseña
             hashed_new_password = generate_password_hash(new_password)
             con_bd.usuarios.update_one({"email": email}, {"$set": {"password": hashed_new_password}})
             flash('La contraseña ha sido actualizada correctamente.', 'success')
 
+            # Redirigir según el rol del usuario
             if usuario['rol'] == 'Empresa':
                 return redirect(url_for('dashcompany'))
             elif usuario['rol'] == 'Desarrollador':
@@ -118,6 +155,7 @@ def crear_app():
                 return redirect(url_for('index'))
 
         return render_template('change_password.html', usuario=usuario)
+
 
     ## Restablecimiento de contraseña
     def send_reset_email(to_email, reset_link):
@@ -432,22 +470,32 @@ def crear_app():
             password = request.form.get("password")
             confirmar_password = request.form.get("confirmar_password")
             admin = "Empresa"
+            
+             # Validar que el NIT no se repita
+            if con_bd.usuarios.find_one({"nit": nit}):
+                flash("El NIT ya está registrado.", "danger")
+                return redirect(url_for('registroEmpresa'))
 
+            # Validación del formato del email
             if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-                flash("El correo electrónico no es válido.")
+                flash("El correo electrónico no es válido.", "danger")
                 return redirect(url_for('registroEmpresa'))
-
-            if password != confirmar_password:
-                flash("Las contraseñas no coinciden.")
-                return redirect(url_for('registroEmpresa'))
-
-            if not validar_contraseña(password):
-                flash("La contraseña debe contener al menos 8 caracteres, un número, una letra minúscula, una letra mayúscula y un carácter especial.")
-                return redirect(url_for('registroEmpresa'))
-
+            
+            # Validar que el email no se repita
             if con_bd.usuarios.find_one({"email": email}):
-                flash("El correo electrónico ya está en uso.")
+                flash("El correo electrónico ya está en uso.", "danger")
                 return redirect(url_for('registroEmpresa'))
+
+            # Validar que las contraseñas coincidan
+            if password != confirmar_password:
+                flash("Las contraseñas no coinciden.", "danger")
+                return redirect(url_for('registroEmpresa'))
+
+            # Validar la seguridad de la contraseña
+            if not validar_contraseña(password):
+                flash("La contraseña debe contener al menos 8 caracteres, un número, una letra minúscula, una letra mayúscula y un carácter especial.", "danger")
+                return redirect(url_for('registroEmpresa'))
+
 
             # Generar código de verificación y enviar correo
             verification_code = generate_verification_code()
@@ -455,6 +503,7 @@ def crear_app():
             session['email_verificar'] = email  # Guardar el email en la sesión para la verificación
             send_verification_email(email, verification_code)
 
+            # Hashear la contraseña y crear el nuevo usuario
             hashed_password = generate_password_hash(password)
             nuevo_usuario = {
                 "nombreEmpresa": nombreEmpresa,
@@ -507,7 +556,7 @@ def crear_app():
         return render_template('verificacion.html')
 
 
-
+ 
 
     
     
@@ -572,6 +621,7 @@ def crear_app():
     # Ruta para establecer la contraseña usando el token
     @app.route('/establecer_contraseña/<token>', methods=['GET', 'POST'])
     def establecer_contraseña_token(token):
+        # Buscar el token en la base de datos
         token_doc = con_bd.tokens.find_one({"token": token})
         
         if not token_doc:
@@ -581,20 +631,36 @@ def crear_app():
         if request.method == 'POST':
             new_password = request.form.get('password')
             confirm_password = request.form.get('confirm_password')
-            
+
+            # Validar que las contraseñas coincidan
             if new_password != confirm_password:
                 flash('Las contraseñas no coinciden.', 'danger')
                 return redirect(url_for('establecer_contraseña_token', token=token))
-            
+
+            # Validar la seguridad de la contraseña
+            if not validar_contraseña(new_password):
+                flash(
+                    'La nueva contraseña debe tener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial.',
+                    'danger'
+                )
+                return redirect(url_for('establecer_contraseña_token', token=token))
+
+            # Si todo es válido, actualizar la contraseña
             hashed_password = generate_password_hash(new_password)
-            con_bd.usuarios.update_one({"email": token_doc['email']}, {"$set": {"password": hashed_password}})
+            con_bd.usuarios.update_one(
+                {"email": token_doc['email']},
+                {"$set": {"password": hashed_password}}
+            )
+            # Eliminar el token usado
             con_bd.tokens.delete_one({"token": token})
+
             flash('Tu contraseña ha sido restablecida exitosamente.', 'success')
 
-            # Redirigir al login después de cambiar la contraseña
+            # Redirigir al login
             return redirect(url_for('login'))
 
         return render_template('establecer_contraseña.html', token=token)
+
 
 
     ## Funciones de obtener datos y enviar solicitudes
