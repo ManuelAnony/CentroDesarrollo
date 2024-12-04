@@ -221,7 +221,7 @@ def crear_app():
     @app.route('/resetear_con_token/<token>', methods=['GET', 'POST'])
     def resetear_con_token(token):
         token_doc = con_bd.tokens.find_one({"token": token})
-        
+
         if not token_doc:
             flash('Token inválido o caducado.', 'danger')
             return redirect(url_for('login'))
@@ -229,6 +229,19 @@ def crear_app():
         if request.method == 'POST':
             new_password = request.form.get('password')
             confirm_password = request.form.get('confirmar_password')
+
+            # Recuperar la contraseña anterior del usuario
+            usuario = con_bd.usuarios.find_one({"email": token_doc['email']})
+            if not usuario:
+                flash('Usuario no encontrado.', 'danger')
+                return redirect(url_for('login'))
+
+            hashed_password_anterior = usuario.get("password")
+
+            # Verificar que la nueva contraseña no sea igual a la anterior
+            if check_password_hash(hashed_password_anterior, new_password):
+                flash('La nueva contraseña no puede ser igual a la anterior.', 'danger')
+                return redirect(url_for('resetear_con_token', token=token))
 
             # Verificación de coincidencia de contraseñas
             if new_password != confirm_password:
@@ -240,7 +253,7 @@ def crear_app():
                 flash(
                     'La contraseña debe tener al menos 8 caracteres, '
                     'incluir un número, una letra minúscula, '
-                    'una letra mayúscula y un carácter especial.', 
+                    'una letra mayúscula y un carácter especial.',
                     'danger'
                 )
                 return redirect(url_for('resetear_con_token', token=token))
@@ -254,6 +267,8 @@ def crear_app():
             return redirect(url_for('login'))
 
         return render_template('resetear_con_token.html', token=token)
+
+
 
 
     ## Verificación de email

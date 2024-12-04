@@ -228,145 +228,147 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script>
-
-        function confirmarEliminarSolicitud(solicitudId) {
-            if (confirm('¿Estás seguro de que deseas eliminar esta solicitud?')) {
-                // Realiza la solicitud AJAX para eliminar la solicitud usando POST
-                fetch(`/eliminar_solicitud_empresa/${solicitudId}`, {
-                    method: 'POST'
-                })
-                .then(response => {
-                    if (response.ok) {
-                        alert('Solicitud eliminada con éxito.');
-                        location.reload(); // Recarga la página para actualizar la lista
-                    } else {
-                        alert('Error al eliminar la solicitud.');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
-        }
-        
         $(function () {
             const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0); // Asegurar que se comparen solo fechas, sin horas
+    
             const dia = String(hoy.getDate()).padStart(2, '0');
-            const mes = String(hoy.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0'); // Meses van de 0 a 11
             const anio = hoy.getFullYear();
-
-            // Fecha mínima: Hoy
-            const fechaMinima = hoy;
-
+    
             // Fecha máxima: 3 meses desde hoy
             const fechaMaxima = new Date(hoy);
             fechaMaxima.setMonth(hoy.getMonth() + 3);
-
+    
             // Establecer la fecha actual en el campo
             $("#fechaSolicitud").val(`${dia}/${mes}/${anio}`);
-
+    
             // Configurar el datepicker
             $("#fechaSolicitud").datepicker({
                 dateFormat: "dd/mm/yy",
                 changeMonth: true,
                 changeYear: true,
-                minDate: fechaMinima, // Hoy
-                maxDate: fechaMaxima, // Máximo 3 meses
-                onSelect: function (dateText) {
-                    validarFecha(dateText);
-                }
+                minDate: hoy, // Fecha mínima: hoy
+                maxDate: fechaMaxima, // Fecha máxima: 3 meses desde hoy
             });
-
-            // Validar fecha seleccionada
+    
+            // Función para validar fecha
             function validarFecha(fechaSeleccionada) {
                 const partesFecha = fechaSeleccionada.split("/");
-                const fechaSeleccionadaDate = new Date(partesFecha[2], partesFecha[1] - 1, partesFecha[0]); // Formato: YYYY-MM-DD
-
-                if (fechaSeleccionadaDate < fechaMinima || fechaSeleccionadaDate > fechaMaxima) {
-                    alert("La fecha debe ser igual o mayor a hoy y no exceder los 3 meses.");
-                    $("#fechaSolicitud").val(`${dia}/${mes}/${anio}`); // Restaurar la fecha actual
+    
+                // Validar que haya exactamente tres partes en la fecha
+                if (partesFecha.length !== 3) {
+                    return false;
                 }
+    
+                const dia = parseInt(partesFecha[0], 10);
+                const mes = parseInt(partesFecha[1], 10) - 1; // Meses empiezan en 0
+                const anio = parseInt(partesFecha[2], 10);
+    
+                // Crear la fecha
+                const fechaSeleccionadaDate = new Date(anio, mes, dia);
+    
+                // Verificar que la fecha sea válida
+                if (
+                    isNaN(fechaSeleccionadaDate.getTime()) || // Verificar que la fecha sea válida
+                    fechaSeleccionadaDate.getDate() !== dia || // Verificar que el día coincida
+                    fechaSeleccionadaDate.getMonth() !== mes || // Verificar que el mes coincida
+                    fechaSeleccionadaDate.getFullYear() !== anio // Verificar que el año coincida
+                ) {
+                    return false;
+                }
+    
+                // Verificar el rango de la fecha
+                if (fechaSeleccionadaDate < hoy || fechaSeleccionadaDate > fechaMaxima) {
+                    return false;
+                }
+    
+                return true;
             }
-        });
-        
-
-        function mostrarFormulario() {
-            var formulario = document.getElementById("formularioSolicitud");
-            formulario.style.display = "block";
-        }
     
-        document.getElementById("linkEnviarSolicitud").addEventListener("click", function(e) {
-            e.preventDefault();
-            mostrarFormulario();
-        });
-
-        $(function() {
-            $("#fechaSolicitud").datepicker({
-                dateFormat: "dd/mm/yy",
-                changeMonth: true,
-                changeYear: true,
-                yearRange: "c-100:c+10"
+            // Validar y enviar formulario
+            document.getElementById("formularioNuevaSolicitud").addEventListener("submit", function (e) {
+                e.preventDefault(); // Prevenir envío por defecto
+    
+                const fechaSolicitud = document.getElementById("fechaSolicitud").value;
+                const botonEnviar = document.querySelector('button[type="submit"]');
+    
+                // Validar la fecha antes de enviar
+                if (!validarFecha(fechaSolicitud)) {
+                    alert("La fecha debe ser válida, igual o mayor a hoy, y no exceder los 3 meses.");
+                    botonEnviar.disabled = false; // Habilitar el botón si hay error
+                    return; // Salir si la fecha no es válida
+                }
+    
+                // Deshabilitar el botón para evitar envíos duplicados
+                botonEnviar.disabled = true;
+    
+                // Enviar el formulario mediante AJAX
+                const formData = new FormData(e.target);
+    
+                fetch("/enviar_solicitud", {
+                    method: "POST",
+                    body: formData,
+                })
+                    .then((response) => {
+                        if (response.ok) {
+                            alert("Solicitud enviada con éxito.");
+                            location.reload(); // Recargar página para actualizar datos
+                        } else {
+                            alert("Hubo un error al enviar la solicitud.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error al enviar la solicitud:", error);
+                        alert("Error al enviar la solicitud.");
+                    })
+                    .finally(() => {
+                        botonEnviar.disabled = false; // Habilitar el botón nuevamente en caso de error
+                    });
             });
-        });
-
-        document.getElementById("formularioNuevaSolicitud").addEventListener("submit", function(e) {
-            e.preventDefault(); // Prevenir el envío del formulario estándar
     
-            // Obtener los datos del formulario
-            var nombreSolicitud = document.getElementById("nombreSolicitud").value;
-            var descripcionSolicitud = document.getElementById("descripcionSolicitud").value;
-            var fechaSolicitud = document.getElementById("fechaSolicitud").value; // Obtener la fecha seleccionada
+            // Mostrar formulario al hacer clic en "Crear Nueva Solicitud"
+            document.getElementById("linkEnviarSolicitud").addEventListener("click", function (e) {
+                e.preventDefault();
+                document.getElementById("formularioSolicitud").style.display = "block";
+            });
     
-            // Crear un objeto FormData para enviar los datos
-            var formData = new FormData();
-            formData.append("nombreSolicitud", nombreSolicitud);
-            formData.append("descripcionSolicitud", descripcionSolicitud);
-            formData.append("fechaSolicitud", fechaSolicitud);
-    
-            // Crear una instancia de XMLHttpRequest
-            var xhr = new XMLHttpRequest();
-    
-            // Configurar la solicitud AJAX (POST a "/enviar_solicitud")
-            xhr.open("POST", "/enviar_solicitud", true);
-    
-            // Definir la función a ejecutar cuando se complete la solicitud
-            xhr.onload = function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    // La solicitud se completó con éxito
-                    var mensaje = document.createElement("p");
-                    mensaje.textContent = "Solicitud enviada con éxito.";
-                    mensaje.className = "mensaje-exito"; // Establecer una clase para el estilo
-                    // Agregar el mensaje debajo de la tabla
-                    document.getElementById("formularioNuevaSolicitud").appendChild(mensaje);
-    
-                    // Recargar la página después de 1 segundo (puedes ajustar esto según sea necesario)
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    // Ocurrió un error en la solicitud
-                    console.error("Error al enviar la solicitud:", xhr.statusText);
+            // Función para confirmar eliminación de solicitudes
+            window.confirmarEliminarSolicitud = function (solicitudId) {
+                if (confirm("¿Estás seguro de que deseas eliminar esta solicitud?")) {
+                    fetch(`/eliminar_solicitud_empresa/${solicitudId}`, {
+                        method: "POST",
+                    })
+                        .then((response) => {
+                            if (response.ok) {
+                                alert("Solicitud eliminada con éxito.");
+                                location.reload();
+                            } else {
+                                alert("Error al eliminar la solicitud.");
+                            }
+                        })
+                        .catch((error) => console.error("Error al eliminar la solicitud:", error));
                 }
             };
-    
-            // Enviar la solicitud con los datos del formulario
-            xhr.send(formData);
         });
 
         // Cerrar Sesion por inactividad
+         
         let tiempoInactividad = 300000; // 5 minutos en milisegundos
         let temporizador;
-    
+
         // Función para reiniciar el temporizador
         function resetearTemporizador() {
             clearTimeout(temporizador);
             temporizador = setTimeout(cerrarSesion, tiempoInactividad);
         }
-    
+
         // Función para cerrar la sesión
         function cerrarSesion() {
             alert("Tu sesión ha expirado por inactividad.");
             window.location.href = "{{ url_for('logout') }}";
         }
-    
+
         // Eventos que indican actividad del usuario
         function registrarEventos() {
             const eventos = [
@@ -378,19 +380,20 @@
                 'touchmove',   // Movimiento en pantallas táctiles
                 'click'        // Clic en cualquier parte
             ];
-    
+
             eventos.forEach(evento => {
                 document.addEventListener(evento, resetearTemporizador);
             });
         }
-    
+
         // Iniciar monitoreo
         window.onload = () => {
             registrarEventos();
             resetearTemporizador();
-        };   
-    
-        
+        };
     </script>
+   
+        
+    
 </body>
 </html>
